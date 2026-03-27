@@ -18,7 +18,7 @@ html,body{background:#06080C;min-height:100vh;font-family:'DM Mono','Fira Mono',
 .scanline{pointer-events:none;position:fixed;left:0;right:0;height:60px;background:linear-gradient(transparent,rgba(130,200,255,.04),transparent);animation:scanln 8s linear infinite;z-index:100}
 .ticker-wrap{overflow:hidden;white-space:nowrap;background:#060A10;border-bottom:1px solid #0A1420;padding:5px 0}
 .ticker-inner{display:inline-block;animation:ticker 32s linear infinite}
-button{font-family:'DM Mono','Fira Mono',monospace;cursor:pointer;transition:opacity .15s,border-color .15s}
+button{font-family:'DM Mono','Fira Mono',monospace;cursor:pointer;transition:opacity .15s}
 button:hover:not(:disabled){opacity:.8}
 button:disabled{cursor:not-allowed}
 .hdr{background:#080C12;border-bottom:1px solid #0E1820;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
@@ -39,6 +39,7 @@ button:disabled{cursor:not-allowed}
 .score-fill{position:absolute;height:100%;border-radius:3px;transition:width .5s ease,left .5s ease}
 .score-mid{position:absolute;left:50%;top:-1px;width:1px;height:7px;background:#0A0E14}
 .free-badge{background:#001A0A;border:1px solid #00CC7033;color:#00CC70;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
+.live-badge{background:#0A0A1A;border:1px solid #00AAFF33;color:#00AAFF;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
 .fade{animation:fadein .4s ease}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
 .modal-box{background:#0A0E14;border:1px solid #1A2A3A;border-radius:8px;padding:32px;max-width:420px;width:90%;animation:fadein .3s ease;text-align:center}
@@ -47,28 +48,23 @@ button:disabled{cursor:not-allowed}
 <body>
 <div class="scanline"></div>
 
-<!-- Login Modal -->
 <div class="modal-bg" id="loginModal" style="display:none">
   <div class="modal-box">
     <div style="font-size:36px;margin-bottom:12px">◈</div>
     <div style="color:#C8DCF0;font-size:15px;letter-spacing:3px;margin-bottom:6px">AI SIGNAL SCANNER</div>
-    <div style="color:#2A3A4A;font-size:10px;letter-spacing:2px;margin-bottom:24px">100% FREE · NO API KEY · NO CREDIT CARD</div>
+    <div style="color:#2A3A4A;font-size:10px;letter-spacing:2px;margin-bottom:24px">100% FREE · REAL LIVE PRICES · NO API KEY</div>
     <p style="font-size:11px;color:#3A5068;line-height:1.9;margin-bottom:24px">
-      This app uses <strong style="color:#6A9ABD">Puter.js</strong> to run Claude AI for free.<br>
-      Sign in with a free Puter account to start scanning.<br>
+      Uses <strong style="color:#6A9ABD">Puter.js</strong> (free Claude AI) +<br>
+      <strong style="color:#00AAFF">CoinGecko & Metals API</strong> for real live prices.<br>
       <span style="color:#1A2A3A;font-size:10px">Sign up is instant — just email + password.</span>
     </p>
     <button id="loginBtn" style="width:100%;background:linear-gradient(135deg,#0E2030,#0A1825);border:1px solid #2A4060;color:#6A9ABD;padding:13px;border-radius:4px;font-size:12px;letter-spacing:3px;margin-bottom:12px">
       ▶ SIGN IN / SIGN UP (FREE)
     </button>
-    <div style="font-size:9px;color:#1A2A3A;line-height:1.8">
-      Powered by puter.com · Free cloud AI platform<br>
-      Your data stays in your browser
-    </div>
+    <div style="font-size:9px;color:#1A2A3A;line-height:1.8">Powered by puter.com · Free cloud AI</div>
   </div>
 </div>
 
-<!-- Main App -->
 <div id="app" style="display:none">
   <div class="hdr">
     <div style="display:flex;align-items:center;gap:12px">
@@ -78,7 +74,8 @@ button:disabled{cursor:not-allowed}
         <div style="font-size:15px;font-weight:500;color:#C8DCF0;letter-spacing:1px;margin-top:1px">
           <span id="hdrLabel">BTC/USD</span>
           <span id="hdrTf" style="font-size:10px;color:#1A3048;margin-left:8px">[5M]</span>
-          <span class="free-badge" style="margin-left:10px">FREE</span>
+          <span class="free-badge" style="margin-left:8px">FREE</span>
+          <span class="live-badge" style="margin-left:4px">LIVE PRICE</span>
         </div>
       </div>
     </div>
@@ -105,6 +102,18 @@ button:disabled{cursor:not-allowed}
       <div class="pill-row" id="tfRow"></div>
     </div>
 
+    <!-- Live price strip -->
+    <div id="priceStrip" class="card" style="display:none;padding:10px 16px;background:#06080C;border-color:#00AAFF22">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A">LIVE MARKET PRICE</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div id="stripPrice" style="font-size:18px;font-weight:500;color:#C8DCF0">—</div>
+          <div id="stripChange" style="font-size:11px">—</div>
+          <div id="stripSource" style="font-size:9px;color:#1A2A3A;letter-spacing:1px">—</div>
+        </div>
+      </div>
+    </div>
+
     <div id="idleBox" class="card fade" style="padding:52px 20px;text-align:center">
       <div style="font-size:30px;margin-bottom:12px;opacity:.3">⬡</div>
       <div style="color:#1A2A3A;font-size:11px;letter-spacing:3px">READY TO SCAN</div>
@@ -128,7 +137,6 @@ button:disabled{cursor:not-allowed}
     </div>
 
     <div id="resultWrap" style="display:none;flex-direction:column;gap:10px" class="fade">
-      <!-- Signal banner -->
       <div id="sigBanner" class="card sig-grid" style="border-left-width:3px;border-left-style:solid">
         <div>
           <div id="sigMeta" style="font-size:9px;letter-spacing:4px;color:#1A2A3A;margin-bottom:8px">SIGNAL</div>
@@ -147,6 +155,7 @@ button:disabled{cursor:not-allowed}
           <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:6px">LIVE PRICE</div>
           <div id="priceVal" style="font-size:20px;color:#C8DCF0;font-weight:500;letter-spacing:1px">—</div>
           <div id="priceAsset" style="font-size:10px;color:#1A2A3A;margin-top:3px"></div>
+          <div id="priceSource" style="font-size:8px;color:#00AAFF;margin-top:2px;letter-spacing:1px"></div>
         </div>
         <div id="dirBox" style="border-radius:4px;padding:14px 18px;text-align:center;min-width:140px;background:#080C12;border:1px solid #1A2A3A">
           <div style="font-size:9px;letter-spacing:2px;color:#1A2A3A;margin-bottom:8px">DIRECTION</div>
@@ -161,10 +170,7 @@ button:disabled{cursor:not-allowed}
       <div class="card">
         <div style="font-size:9px;letter-spacing:2px;color:#1A2A3A;margin-bottom:6px">SCORE</div>
         <div id="scoreVal" style="font-size:13px;font-weight:500;color:#C8DCF0;margin-bottom:8px">—</div>
-        <div class="score-track">
-          <div class="score-fill" id="scoreFill"></div>
-          <div class="score-mid"></div>
-        </div>
+        <div class="score-track"><div class="score-fill" id="scoreFill"></div><div class="score-mid"></div></div>
         <div id="scoreLbl" style="font-size:9px;margin-top:5px;letter-spacing:1px;color:#2A3A4A">—</div>
       </div>
 
@@ -173,9 +179,7 @@ button:disabled{cursor:not-allowed}
         <div id="reasons" style="display:flex;flex-direction:column;gap:4px"></div>
       </div>
 
-      <button id="rescanBtn" style="background:#080C12;padding:12px;font-size:11px;letter-spacing:3px;border-radius:3px;width:100%;color:#3A5068;border:1px solid #1A2A3A">
-        ↻ RESCAN
-      </button>
+      <button id="rescanBtn" style="background:#080C12;padding:12px;font-size:11px;letter-spacing:3px;border-radius:3px;width:100%;color:#3A5068;border:1px solid #1A2A3A">↻ RESCAN</button>
     </div>
 
     <div id="histWrap" class="card" style="display:none">
@@ -185,91 +189,139 @@ button:disabled{cursor:not-allowed}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="card" style="background:#080A06;border-color:#0E1408;font-size:9px;color:#2A3A20;line-height:1.8;letter-spacing:1px">
-        ⚠ AI-POWERED · LIVE WEB SEARCH<br>NOT FINANCIAL ADVICE<br>ALWAYS USE DEMO FIRST
+        ⚠ AI-POWERED · REAL LIVE PRICES<br>NOT FINANCIAL ADVICE<br>ALWAYS USE DEMO FIRST
       </div>
       <div class="card" style="font-size:9px;color:#1A2A3A;line-height:1.8">
-        <div style="color:#2A3A4A;margin-bottom:3px">BEST PLATFORMS</div>
-        deriv.com · expertoption.com<br>binance.com · bybit.com
+        <div style="color:#2A3A4A;margin-bottom:3px">PRICE SOURCES</div>
+        CoinGecko (crypto)<br>metals-api / open-price (gold/silver)
       </div>
     </div>
     <div style="text-align:center;padding:8px 0;font-size:9px;color:#0E1820;letter-spacing:2px">
-      FREE · POWERED BY PUTER.JS + CLAUDE AI
+      FREE · REAL LIVE PRICES · POWERED BY PUTER.JS + CLAUDE AI
     </div>
   </div>
 </div>
 
 <script>
+/* ── Constants ── */
 const ASSETS = [
-  {symbol:"BTC",    label:"BTC/USD",    accent:"#F7931A",type:"crypto"},
-  {symbol:"ETH",    label:"ETH/USD",    accent:"#627EEA",type:"crypto"},
-  {symbol:"BNB",    label:"BNB/USD",    accent:"#F3BA2F",type:"crypto"},
-  {symbol:"SOL",    label:"SOL/USD",    accent:"#9945FF",type:"crypto"},
-  {symbol:"XRP",    label:"XRP/USD",    accent:"#00AAE4",type:"crypto"},
-  {symbol:"DOGE",   label:"DOGE/USD",   accent:"#C2A633",type:"crypto"},
-  {symbol:"XAUUSD", label:"GOLD/USD",   accent:"#FFD700",type:"commodity"},
-  {symbol:"XAGUSD", label:"SILVER/USD", accent:"#C0C0C0",type:"commodity"},
+  {symbol:"BTC",    label:"BTC/USD",    accent:"#F7931A",type:"crypto",  cgId:"bitcoin"},
+  {symbol:"ETH",    label:"ETH/USD",    accent:"#627EEA",type:"crypto",  cgId:"ethereum"},
+  {symbol:"BNB",    label:"BNB/USD",    accent:"#F3BA2F",type:"crypto",  cgId:"binancecoin"},
+  {symbol:"SOL",    label:"SOL/USD",    accent:"#9945FF",type:"crypto",  cgId:"solana"},
+  {symbol:"XRP",    label:"XRP/USD",    accent:"#00AAE4",type:"crypto",  cgId:"ripple"},
+  {symbol:"DOGE",   label:"DOGE/USD",   accent:"#C2A633",type:"crypto",  cgId:"dogecoin"},
+  {symbol:"XAUUSD", label:"GOLD/USD",   accent:"#FFD700",type:"commodity",cgId:"gold"},
+  {symbol:"XAGUSD", label:"SILVER/USD", accent:"#C0C0C0",type:"commodity",cgId:"silver"},
 ];
 const TF_SHORT   = ["1M","5M","15M","30M","1H","4H"];
 const TIMEFRAMES = ["1 minute","5 minutes","15 minutes","30 minutes","1 hour","4 hours"];
-// Ticker data — fetched live from CoinGecko (no key needed)
-let TICKER_DATA = [
-  {label:"BTC/USD",price:"…",change:0},{label:"ETH/USD",price:"…",change:0},
-  {label:"SOL/USD",price:"…",change:0},{label:"XRP/USD",price:"…",change:0},
-  {label:"BNB/USD",price:"…",change:0},{label:"DOGE",price:"…",change:0},
-  {label:"GOLD",price:"…",change:0},{label:"SILVER",price:"…",change:0},
-];
-
-async function fetchLivePrices() {
-  try {
-    // CoinGecko free API — no key needed
-    const url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple,binancecoin,dogecoin&vs_currencies=usd&include_24hr_change=true";
-    const res = await fetch(url);
-    const d = await res.json();
-    const fmt = (n) => n >= 1000 ? Number(n).toLocaleString("en",{maximumFractionDigits:0})
-                      : n >= 1    ? Number(n).toFixed(4).replace(/\.?0+$/,"")
-                      : Number(n).toFixed(5);
-    const chg = (c) => c ? Math.round(c*100)/100 : 0;
-    TICKER_DATA = [
-      {label:"BTC/USD", price:fmt(d.bitcoin?.usd||0),      change:chg(d.bitcoin?.usd_24h_change)},
-      {label:"ETH/USD", price:fmt(d.ethereum?.usd||0),     change:chg(d.ethereum?.usd_24h_change)},
-      {label:"SOL/USD", price:fmt(d.solana?.usd||0),       change:chg(d.solana?.usd_24h_change)},
-      {label:"XRP/USD", price:fmt(d.ripple?.usd||0),       change:chg(d.ripple?.usd_24h_change)},
-      {label:"BNB/USD", price:fmt(d.binancecoin?.usd||0),  change:chg(d.binancecoin?.usd_24h_change)},
-      {label:"DOGE",    price:fmt(d.dogecoin?.usd||0),     change:chg(d.dogecoin?.usd_24h_change)},
-      {label:"GOLD",    price:"…", change:0},
-      {label:"SILVER",  price:"…", change:0},
-    ];
-    buildTicker();
-  } catch(e) { console.warn("Ticker fetch failed:", e.message); }
-}
-const SIG_META = {
-  "STRONG BUY": {color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
-  "BUY":        {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
-  "NEUTRAL":    {color:"#FFBE00",glow:"#FFBE0018",icon:"━"},
-  "SELL":       {color:"#FF5C7A",glow:"#FF5C7A22",icon:"▼"},
+const SIG_META={
+  "STRONG BUY":{color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
+  "BUY":       {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
+  "NEUTRAL":   {color:"#FFBE00",glow:"#FFBE0018",icon:"━"},
+  "SELL":      {color:"#FF5C7A",glow:"#FF5C7A22",icon:"▼"},
   "STRONG SELL":{color:"#FF2050",glow:"#FF205033",icon:"▼▼"},
 };
 const IND_C={BULLISH:"#00CC70",BEARISH:"#FF5C7A",UPTREND:"#00CC70",DOWNTREND:"#FF5C7A",UPPER:"#FF5C7A",LOWER:"#00CC70",NEUTRAL:"#3A5068",MIDDLE:"#3A5068"};
-const STEPS=["Fetching live price…","Running RSI + MACD…","Analyzing EMA + BB…","Generating signal…"];
+const STEPS=["Fetching live price…","Analyzing market data…","Calculating indicators…","Generating signal…"];
 
-let tab="CRYPTO", asset=ASSETS[0], tfIdx=1, loading=false, history=[], loadStep=0, loadIv=null;
+let tab="CRYPTO",asset=ASSETS[0],tfIdx=1,loading=false,history=[],loadStep=0,loadIv=null;
+let livePrice=null, liveChange=null, livePriceSource="";
 
-/* ── Ticker ── */
-function buildTicker(){
-  const items=[...TICKER_DATA,...TICKER_DATA];
-  document.getElementById("ticker").innerHTML=items.map(p=>`
+/* ═══════════════════════════════════════════
+   LIVE PRICE FETCHER
+   Uses CoinGecko for crypto (free, no key)
+   Uses multiple fallbacks for gold/silver
+═══════════════════════════════════════════ */
+async function fetchLivePrice(a) {
+  if (a.type === "crypto") {
+    // CoinGecko free API — no key needed
+    try {
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${a.cgId}&vs_currencies=usd&include_24hr_change=true`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const d = data[a.cgId];
+      if (d && d.usd) {
+        return {price: d.usd, change: d.usd_24h_change ? +d.usd_24h_change.toFixed(2) : null, source:"CoinGecko"};
+      }
+    } catch(e) { console.warn("CoinGecko failed:", e); }
+
+    // Fallback: Binance public API
+    try {
+      const pair = a.symbol + "USDT";
+      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`);
+      const data = await res.json();
+      if (data.lastPrice) {
+        return {price: parseFloat(data.lastPrice), change: parseFloat(data.priceChangePercent), source:"Binance"};
+      }
+    } catch(e) { console.warn("Binance failed:", e); }
+  }
+
+  if (a.type === "commodity") {
+    // Metals.live free public endpoint
+    try {
+      const metalMap = {XAUUSD:"XAU", XAGUSD:"XAG"};
+      const metal = metalMap[a.symbol];
+      const res = await fetch(`https://metals.live/api/spot`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        const entry = data.find(x => x.metal && x.metal.toUpperCase() === metal);
+        if (entry && entry.price) return {price: +entry.price, change: null, source:"metals.live"};
+      }
+    } catch(e) { console.warn("metals.live failed:", e); }
+
+    // Fallback: frankfurter/exchangerate for XAU/XAG via currency
+    try {
+      const metalSymbol = a.symbol === "XAUUSD" ? "XAU" : "XAG";
+      const res = await fetch(`https://api.frankfurter.app/latest?from=${metalSymbol}&to=USD`);
+      const data = await res.json();
+      if (data.rates && data.rates.USD) {
+        return {price: +data.rates.USD.toFixed(2), change: null, source:"Frankfurter"};
+      }
+    } catch(e) { console.warn("Frankfurter failed:", e); }
+
+    // Fallback 2: open.er-api.com
+    try {
+      const metalSymbol = a.symbol === "XAUUSD" ? "XAU" : "XAG";
+      const res = await fetch(`https://open.er-api.com/v6/latest/${metalSymbol}`);
+      const data = await res.json();
+      if (data.rates && data.rates.USD) {
+        return {price: +data.rates.USD.toFixed(2), change: null, source:"ExchangeRate-API"};
+      }
+    } catch(e) { console.warn("er-api failed:", e); }
+  }
+
+  return null; // all failed
+}
+
+/* ── Ticker builder ── */
+function buildTicker(prices){
+  const items = [...prices, ...prices];
+  document.getElementById("ticker").innerHTML = items.map(p=>`
     <span style="display:inline-block;margin-right:32px;font-size:10px;letter-spacing:1px">
       <span style="color:#2A3A4A;margin-right:6px">${p.label}</span>
-      <span style="color:#C8DCF0;margin-right:4px">$${p.price}</span>
-      <span style="color:${p.change>=0?"#00CC70":"#FF5C7A"}">${p.change>=0?"▲":"▼"} ${Math.abs(p.change)}%</span>
+      <span style="color:#C8DCF0;margin-right:4px">$${typeof p.price==="number"?p.price.toLocaleString("en",{maximumFractionDigits:p.price>100?2:4}):p.price}</span>
+      ${p.change!=null?`<span style="color:${p.change>=0?"#00CC70":"#FF5C7A"}">${p.change>=0?"▲":"▼"} ${Math.abs(p.change).toFixed(2)}%</span>`:""}
     </span>`).join("");
+}
+
+/* Fetch ticker prices in background */
+async function refreshTicker(){
+  const tickerAssets = ASSETS.slice(0,6); // top 6 crypto for ticker speed
+  const results = await Promise.allSettled(tickerAssets.map(a=>fetchLivePrice(a)));
+  const prices = tickerAssets.map((a,i)=>{
+    const r = results[i];
+    return {label:a.label, price: r.status==="fulfilled"&&r.value ? r.value.price : "—", change: r.status==="fulfilled"&&r.value ? r.value.change : null};
+  });
+  buildTicker(prices);
 }
 
 /* ── Pill builders ── */
 function buildAssets(){
-  const row=document.getElementById("assetRow");
-  row.innerHTML=ASSETS.filter(a=>tab==="CRYPTO"?a.type==="crypto":a.type==="commodity").map(a=>`
-    <button class="pill ${a.symbol===asset.symbol?"active":""}"
+  document.getElementById("assetRow").innerHTML=ASSETS
+    .filter(a=>tab==="CRYPTO"?a.type==="crypto":a.type==="commodity")
+    .map(a=>`<button class="pill ${a.symbol===asset.symbol?"active":""}"
       style="${a.symbol===asset.symbol?`border-color:${a.accent}44;color:${a.accent}`:""}"
       onclick="selectAsset('${a.symbol}')">${a.label}</button>`).join("");
 }
@@ -279,19 +331,13 @@ function buildTF(){
       style="${i===tfIdx?"border-color:#1A3050;color:#6A9ABD":""}"
       onclick="selectTF(${i})">${t}</button>`).join("");
 }
-function selectAsset(sym){
-  asset=ASSETS.find(a=>a.symbol===sym); resetResult();
-  updateHeader(); buildAssets();
-}
-function selectTF(i){
-  tfIdx=i; resetResult(); buildTF();
-  document.getElementById("hdrTf").textContent=`[${TF_SHORT[i]}]`;
-}
+function selectAsset(sym){asset=ASSETS.find(a=>a.symbol===sym);resetResult();updateHeader();buildAssets();}
+function selectTF(i){tfIdx=i;resetResult();buildTF();document.getElementById("hdrTf").textContent=`[${TF_SHORT[i]}]`;}
 function switchTab(t){
   tab=t;
   document.querySelectorAll(".tab-btn").forEach((b,i)=>b.classList.toggle("active",i===(t==="CRYPTO"?0:1)));
   asset=ASSETS.find(a=>a.type===(t==="CRYPTO"?"crypto":"commodity"));
-  resetResult(); updateHeader(); buildAssets();
+  resetResult();updateHeader();buildAssets();
 }
 function updateHeader(){
   const ai=document.getElementById("assetIcon");
@@ -300,38 +346,38 @@ function updateHeader(){
   document.getElementById("hdrLabel").style.color=asset.accent;
   document.getElementById("hdrLabel").textContent=asset.label;
 }
-
-/* ── Show/hide panels ── */
 function showOnly(id){
   ["idleBox","loadBox","errBox","resultWrap"].forEach(x=>{
     const el=document.getElementById(x);
     el.style.display=x===id?(x==="resultWrap"?"flex":"block"):"none";
   });
 }
-function resetResult(){showOnly("idleBox");}
-
-/* ── Loading step animator ── */
+function resetResult(){
+  showOnly("idleBox");
+  document.getElementById("priceStrip").style.display="none";
+  livePrice=null;liveChange=null;
+}
 function setStep(s){
   loadStep=s;
-  const labels=STEPS;
-  document.getElementById("loadLabel").textContent=labels[Math.min(s,labels.length-1)];
+  document.getElementById("loadLabel").textContent=STEPS[Math.min(s,STEPS.length-1)];
   document.getElementById("loadSub").textContent=`${asset.label} · ${TF_SHORT[tfIdx]}`;
-  document.getElementById("loadTxt").textContent=labels[Math.min(s,labels.length-1)];
+  document.getElementById("loadTxt").textContent=STEPS[Math.min(s,STEPS.length-1)];
   [0,1,2,3].forEach(i=>{
     const bar=document.getElementById("lb"+i);
-    const active=i<=s;
-    bar.style.height=active?"28px":"14px";
-    bar.style.background=active?"#FFBE00":"#0E1820";
-    bar.style.boxShadow=active?"0 0 8px #FFBE00":"none";
+    bar.style.height=i<=s?"28px":"14px";
+    bar.style.background=i<=s?"#FFBE00":"#0E1820";
+    bar.style.boxShadow=i<=s?"0 0 8px #FFBE00":"none";
   });
 }
 
 /* ── Render result ── */
-function renderResult(r){
+function renderResult(r, realPrice){
   const m=SIG_META[r.signal]||{color:"#3A5068",glow:"#0000",icon:"◌"};
   const C=2*Math.PI*30;
+  // ALWAYS use the real fetched price, override whatever AI said
+  const displayPrice = realPrice || r.price;
+  const decimals = asset.type==="commodity"?2:4;
 
-  // Banner
   const banner=document.getElementById("sigBanner");
   banner.style.borderLeftColor=m.color;
   banner.style.boxShadow=`inset 0 0 40px ${m.glow}`;
@@ -341,7 +387,6 @@ function renderResult(r){
   document.getElementById("sigLabel").style.textShadow=`0 0 20px ${m.color}88`;
   document.getElementById("sigSummary").textContent=r.summary||"";
 
-  // Meter
   const pct=r.confidence||50;
   document.getElementById("meterArc").setAttribute("stroke-dasharray",`${C*pct/100} ${C}`);
   document.getElementById("meterArc").setAttribute("stroke",m.color);
@@ -349,12 +394,10 @@ function renderResult(r){
   document.getElementById("meterTxt").textContent=pct+"%";
   document.getElementById("meterTxt").setAttribute("fill",m.color);
 
-  // Price
-  const decimals=asset.type==="commodity"?2:4;
-  document.getElementById("priceVal").textContent="$"+Number(r.price).toLocaleString("en",{maximumFractionDigits:decimals});
+  document.getElementById("priceVal").textContent="$"+Number(displayPrice).toLocaleString("en",{maximumFractionDigits:decimals});
   document.getElementById("priceAsset").textContent=asset.label;
+  document.getElementById("priceSource").textContent=livePriceSource ? "● "+livePriceSource : "";
 
-  // Direction
   const dirBox=document.getElementById("dirBox");
   dirBox.style.borderColor=`${m.color}22`;
   dirBox.style.background=r.signal.includes("BUY")?"#001A0A":r.signal.includes("SELL")?"#150008":"#080C12";
@@ -371,20 +414,11 @@ function renderResult(r){
     document.getElementById("dirSub").innerHTML="Deriv.com<br>ExpertOption";
   }
 
-  // Indicators
   const inds=[
-    {label:"RSI (14)", val:r.rsi?Number(r.rsi).toFixed(1):"—",
-     sub:!r.rsi?"N/A":r.rsi<30?"OVERSOLD":r.rsi>70?"OVERBOUGHT":"NEUTRAL",
-     color:!r.rsi?"#2A3A4A":r.rsi<30?"#00CC70":r.rsi>70?"#FF5C7A":"#2A3A4A"},
-    {label:"MACD",    val:r.macd||"—",
-     sub:r.macd==="BULLISH"?"BUY PRESSURE":r.macd==="BEARISH"?"SELL PRESSURE":"FLAT",
-     color:IND_C[r.macd]||"#3A5068"},
-    {label:"EMA 9/21",val:r.ema||"—",
-     sub:r.ema==="UPTREND"?"GOING UP":r.ema==="DOWNTREND"?"GOING DOWN":"SIDEWAYS",
-     color:IND_C[r.ema]||"#3A5068"},
-    {label:"BOLLINGER",val:r.bb||"—",
-     sub:r.bb==="UPPER"?"OVERBOUGHT ZONE":r.bb==="LOWER"?"OVERSOLD ZONE":"NORMAL RANGE",
-     color:IND_C[r.bb]||"#3A5068"},
+    {label:"RSI (14)",val:r.rsi?Number(r.rsi).toFixed(1):"—",sub:!r.rsi?"N/A":r.rsi<30?"OVERSOLD":r.rsi>70?"OVERBOUGHT":"NEUTRAL",color:!r.rsi?"#2A3A4A":r.rsi<30?"#00CC70":r.rsi>70?"#FF5C7A":"#2A3A4A"},
+    {label:"MACD",val:r.macd||"—",sub:r.macd==="BULLISH"?"BUY PRESSURE":r.macd==="BEARISH"?"SELL PRESSURE":"FLAT",color:IND_C[r.macd]||"#3A5068"},
+    {label:"EMA 9/21",val:r.ema||"—",sub:r.ema==="UPTREND"?"GOING UP":r.ema==="DOWNTREND"?"GOING DOWN":"SIDEWAYS",color:IND_C[r.ema]||"#3A5068"},
+    {label:"BOLLINGER",val:r.bb||"—",sub:r.bb==="UPPER"?"OVERBOUGHT ZONE":r.bb==="LOWER"?"OVERSOLD ZONE":"NORMAL RANGE",color:IND_C[r.bb]||"#3A5068"},
   ];
   document.getElementById("indGrid").innerHTML=inds.map(ind=>`
     <div class="card">
@@ -393,7 +427,6 @@ function renderResult(r){
       <div style="font-size:9px;letter-spacing:1px;color:${ind.color}">${ind.sub}</div>
     </div>`).join("");
 
-  // Score
   const sc=r.score||0;
   const pctSc=((Math.min(Math.max(sc,-6),6)+6)/12)*100;
   const scColor=sc>=2?"#00CC70":sc<=-2?"#FF5C7A":"#FFBE00";
@@ -406,16 +439,12 @@ function renderResult(r){
   document.getElementById("scoreLbl").textContent=sc>=4?"VERY BULLISH":sc>=2?"BULLISH":sc<=-4?"VERY BEARISH":sc<=-2?"BEARISH":"MIXED";
   document.getElementById("scoreLbl").style.color=scColor;
 
-  // Reasons
   document.getElementById("reasons").innerHTML=(r.reasons||[]).map(rs=>`
     <div class="reason" style="border-left:2px solid ${rs.t==="buy"?"#00CC70":rs.t==="sell"?"#FF5C7A":"#2A3A4A"}">
-      <span style="font-size:9px;color:${rs.t==="buy"?"#00CC70":rs.t==="sell"?"#FF5C7A":"#2A3A4A"};margin-top:2px">
-        ${rs.t==="buy"?"▲":rs.t==="sell"?"▼":"—"}
-      </span>
+      <span style="font-size:9px;color:${rs.t==="buy"?"#00CC70":rs.t==="sell"?"#FF5C7A":"#2A3A4A"};margin-top:2px">${rs.t==="buy"?"▲":rs.t==="sell"?"▼":"—"}</span>
       <span style="font-size:11px;color:#4A6070;line-height:1.6">${rs.txt}</span>
     </div>`).join("");
 
-  // Rescan button
   const rb=document.getElementById("rescanBtn");
   rb.textContent=`↻ RESCAN ${asset.label}`;
   rb.style.color=m.color;
@@ -425,93 +454,115 @@ function renderResult(r){
   showOnly("resultWrap");
 }
 
-/* ── History ── */
-function pushHistory(r){
-  history.unshift({signal:r.signal,price:r.price,time:r.time,asset:asset.label,tf:TF_SHORT[tfIdx]});
+function pushHistory(r, realPrice){
+  const displayPrice = realPrice || r.price;
+  history.unshift({signal:r.signal,price:displayPrice,time:r.time,asset:asset.label,tf:TF_SHORT[tfIdx]});
   if(history.length>10) history.pop();
   const wrap=document.getElementById("histWrap");
   wrap.style.display="block";
   document.getElementById("histList").innerHTML=history.map((h,i)=>{
     const hm=SIG_META[h.signal]||{color:"#3A5068",icon:"◌"};
+    const decimals=h.price>500?2:4;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:${i===0?"#0A0E14":"transparent"};border-radius:2px;opacity:${1-i*0.08}">
       <span style="font-size:9px;color:#1A2A3A;min-width:70px">${h.time}</span>
       <span style="font-size:10px;color:#1A2A3A;min-width:14px">${h.tf}</span>
       <span style="font-size:10px;color:#2A3A4A;min-width:75px;margin-left:8px">${h.asset}</span>
       <span style="font-size:10px;color:${hm.color};flex:1;letter-spacing:1px">${hm.icon} ${h.signal}</span>
-      <span style="font-size:10px;color:#2A3A4A">$${Number(h.price).toLocaleString("en",{maximumFractionDigits:2})}</span>
+      <span style="font-size:10px;color:#00AAFF">$${Number(h.price).toLocaleString("en",{maximumFractionDigits:decimals})}</span>
     </div>`;
   }).join("");
 }
 
-/* ── Prompt builder ── */
-function buildPrompt(){
-  const assetName=asset.symbol==="XAUUSD"?"Gold (XAU/USD)":asset.symbol==="XAGUSD"?"Silver (XAG/USD)":`${asset.symbol}/USD`;
-  const searchTerms=asset.type==="commodity"
-    ? `"${assetName} spot price now" AND "USD" to get the exact live market price`
-    : `"${asset.symbol} price USD" live to get the exact current trading price`;
-  return `You are a live trading signal analyst. Today is ${new Date().toUTCString()}.
-
-TASK: Analyze ${assetName} on the ${TIMEFRAMES[tfIdx]} timeframe.
-
-STEP 1 — YOU MUST SEARCH THE WEB FIRST.
-Search for: ${searchTerms}
-Also search for: "${asset.symbol} 24h change trend ${new Date().getFullYear()}"
-${asset.type==="commodity"
-  ? `Also search: "gold silver market today USD DXY" for macro context`
-  : `Also search: "${asset.symbol} market sentiment news today"`}
-
-STEP 2 — After your search, use ONLY the prices and data you just found.
-NEVER use your training data for the price. The price in your JSON MUST match what major exchanges show RIGHT NOW (Binance, CoinGecko, Kitco, etc).
-
-STEP 3 — Estimate indicators based on the LIVE data you found:
-- RSI(14): rising fast → 65-75, falling fast → 25-35, sideways → 45-55
-- MACD: positive momentum → BULLISH, negative → BEARISH, flat → NEUTRAL
-- EMA 9 vs 21: price trending up recently → UPTREND, down → DOWNTREND
-- Bollinger Bands: price at recent highs → UPPER, lows → LOWER, middle → MIDDLE
-
-STEP 4 — Output ONLY this JSON, nothing else, no markdown fences:
-{"signal":"BUY","confidence":65,"price":REPLACE_WITH_REAL_LIVE_PRICE,"score":3,"rsi":58.0,"macd":"BULLISH","ema":"UPTREND","bb":"MIDDLE","reasons":[{"txt":"replace with real reason based on live data","t":"buy"}],"summary":"Replace with one sentence based on live price and conditions."}
-
-IMPORTANT: The "price" field must be the EXACT number you found via web search. Example: if BTC is trading at 83,450 on Binance right now, use 83450. If Gold is at 3,018.50, use 3018.50. No rounding to round numbers. No training data prices.`;
-}
-
-/* ── Main scan ── */
+/* ═══════════════════════════════════════════
+   MAIN SCAN FUNCTION
+   Step 1: Fetch REAL price from API
+   Step 2: Send price + context to Claude
+   Step 3: Claude does analysis only, not pricing
+═══════════════════════════════════════════ */
 async function scan(){
   if(loading) return;
   loading=true;
   const btn=document.getElementById("scanBtn");
-  btn.textContent="···";
-  btn.disabled=true;
+  btn.textContent="···"; btn.disabled=true;
   document.getElementById("loadMsg").style.display="inline";
   showOnly("loadBox");
   clearInterval(loadIv);
   loadStep=0; setStep(0);
-  loadIv=setInterval(()=>setStep(Math.min(loadStep+1,STEPS.length-1)), 2200);
+  loadIv=setInterval(()=>setStep(Math.min(loadStep+1,STEPS.length-1)),2000);
 
   try {
-    const prompt=buildPrompt();
+    // ── STEP 1: Fetch real live price ──────────────────────
+    setStep(0);
+    const priceData = await fetchLivePrice(asset);
+
+    if (!priceData) throw new Error(`Could not fetch live price for ${asset.label}. Check your internet connection and try again.`);
+
+    livePrice = priceData.price;
+    liveChange = priceData.change;
+    livePriceSource = priceData.source;
+
+    // Show price strip immediately
+    const strip=document.getElementById("priceStrip");
+    strip.style.display="block";
+    const decimals=asset.type==="commodity"?2:4;
+    document.getElementById("stripPrice").textContent="$"+livePrice.toLocaleString("en",{maximumFractionDigits:decimals});
+    document.getElementById("stripChange").textContent=liveChange!=null?`${liveChange>=0?"▲":"▼"} ${Math.abs(liveChange).toFixed(2)}%`:"";
+    document.getElementById("stripChange").style.color=liveChange!=null?(liveChange>=0?"#00CC70":"#FF5C7A"):"#3A5068";
+    document.getElementById("stripSource").textContent="via "+livePriceSource;
+
+    // ── STEP 2: Ask Claude for analysis (NOT price) ────────
+    setStep(1);
+    const assetName=asset.symbol==="XAUUSD"?"Gold (XAU/USD)":asset.symbol==="XAGUSD"?"Silver (XAG/USD)":`${asset.symbol}/USD`;
+    const changeText = liveChange!=null ? `The 24h price change is ${liveChange>0?"+":""}${liveChange.toFixed(2)}%.` : "";
+
+    const prompt=`You are a professional trading signal analyst.
+
+CONFIRMED LIVE MARKET DATA (fetched right now from ${livePriceSource}):
+- Asset: ${assetName}
+- Current price: $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} USD (THIS IS THE REAL PRICE — use this exact number)
+- Timeframe: ${TIMEFRAMES[tfIdx]}
+- Time: ${new Date().toUTCString()}
+${changeText}
+
+Using this confirmed live price of $${livePrice}, analyze the ${TIMEFRAMES[tfIdx]} timeframe and estimate:
+- RSI(14): ${liveChange!=null?(Math.abs(liveChange)>5?(liveChange>0?"likely 60-75 (strong move up)":"likely 25-40 (strong move down)"):"likely 45-55 (mild movement)"):"estimate based on price action"}
+- MACD momentum direction
+- EMA 9 vs EMA 21 relationship  
+- Bollinger Band position
+${asset.type==="commodity"?"Consider: gold/silver are affected by USD strength, inflation, and Fed policy.":""}
+
+Rules:
+1. The "price" field MUST be exactly ${livePrice} — do not change it
+2. Base your signal on the ${liveChange!=null?(liveChange>0?"bullish":"bearish"):"current"} momentum implied by the live data
+3. Be specific in reasons — mention the actual price $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}
+
+Respond ONLY with JSON, no markdown:
+{"signal":"BUY","confidence":65,"price":${livePrice},"score":3,"rsi":58.0,"macd":"BULLISH","ema":"UPTREND","bb":"MIDDLE","reasons":[{"txt":"Specific reason mentioning $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} and market conditions","t":"buy"}],"summary":"One sentence summary mentioning the live price $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}."}`;
+
+    setStep(2);
     const resp = await puter.ai.chat(prompt, {model:"claude-sonnet-4-5"});
 
-    // Recursively extract plain text from any Puter/Anthropic response shape
-    function extractText(r) {
-      if (!r) return "";
-      if (typeof r === "string") return r;
-      if (Array.isArray(r)) return r.map(b => (b && typeof b.text === "string") ? b.text : "").filter(Boolean).join("\n");
-      if (r.message !== undefined) return extractText(r.message && r.message.content !== undefined ? r.message.content : r.message);
-      if (r.content !== undefined) return extractText(r.content);
-      if (typeof r.text === "string") return r.text;
+    function extractText(r){
+      if(!r) return "";
+      if(typeof r==="string") return r;
+      if(Array.isArray(r)) return r.map(b=>b&&b.text?b.text:"").filter(Boolean).join("\n");
+      if(r.message!==undefined) return extractText(r.message&&r.message.content!==undefined?r.message.content:r.message);
+      if(r.content!==undefined) return extractText(r.content);
+      if(typeof r.text==="string") return r.text;
       return JSON.stringify(r);
     }
-    const text = extractText(resp);
-    console.log("[scanner] resp shape:", JSON.stringify(resp).slice(0,120));
-    console.log("[scanner] extracted:", text.slice(0,120));
+    const text=extractText(resp);
+    const match=text.match(/\{[\s\S]*\}/);
+    if(!match) throw new Error("No JSON found. Response: "+text.slice(0,150));
 
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON found. Raw: " + text.slice(0, 200));
+    setStep(3);
     const parsed=JSON.parse(match[0]);
     parsed.time=new Date().toLocaleTimeString();
-    renderResult(parsed);
-    pushHistory(parsed);
+    // Force the real price regardless of what AI returned
+    parsed.price=livePrice;
+
+    renderResult(parsed, livePrice);
+    pushHistory(parsed, livePrice);
 
   } catch(e){
     console.error(e);
@@ -521,18 +572,18 @@ async function scan(){
 
   clearInterval(loadIv);
   loading=false;
-  btn.textContent="▶ SCAN MARKET";
-  btn.disabled=false;
+  btn.textContent="▶ SCAN MARKET"; btn.disabled=false;
   document.getElementById("loadMsg").style.display="none";
 }
 
-/* ── Puter auth check ── */
+/* ── Auth + Init ── */
 async function init(){
-  buildTicker();
-  fetchLivePrices();
-  buildAssets();
-  buildTF();
-  updateHeader();
+  // Build UI
+  buildAssets(); buildTF(); updateHeader();
+  buildTicker([
+    {label:"BTC/USD",price:"loading…",change:null},{label:"ETH/USD",price:"loading…",change:null},
+    {label:"SOL/USD",price:"loading…",change:null},{label:"GOLD",price:"loading…",change:null},
+  ]);
 
   document.getElementById("scanBtn").onclick=scan;
   document.getElementById("rescanBtn").onclick=scan;
@@ -541,24 +592,24 @@ async function init(){
       await puter.auth.signIn();
       document.getElementById("loginModal").style.display="none";
       document.getElementById("app").style.display="block";
+      refreshTicker();
     }catch(e){console.error(e);}
   };
 
-  // Check if already signed in
   try{
-    const isSignedIn = await puter.auth.isSignedIn();
-    if(isSignedIn){
+    const signedIn=await puter.auth.isSignedIn();
+    if(signedIn){
       document.getElementById("app").style.display="block";
+      refreshTicker(); // load real ticker prices
     } else {
       document.getElementById("loginModal").style.display="flex";
     }
-  } catch(e){
-    // puter not loaded yet or error — show login
+  }catch(e){
     document.getElementById("loginModal").style.display="flex";
   }
 }
 
-window.addEventListener("load", init);
+window.addEventListener("load",init);
 </script>
 </body>
 </html>
