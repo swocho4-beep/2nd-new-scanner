@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AI Trading Signal Scanner — Free</title>
+<title>AI Trading Signal Scanner</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>"/>
-<script src="https://js.puter.com/v2/"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -39,32 +38,58 @@ button:disabled{cursor:not-allowed}
 .score-fill{position:absolute;height:100%;border-radius:3px;transition:width .5s ease,left .5s ease}
 .score-mid{position:absolute;left:50%;top:-1px;width:1px;height:7px;background:#0A0E14}
 .free-badge{background:#001A0A;border:1px solid #00CC7033;color:#00CC70;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
-.live-badge{background:#0A0A1A;border:1px solid #00AAFF33;color:#00AAFF;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
+.live-badge{background:#0A0A1A;border:1px solid #4A8AFF33;color:#4A8AFF;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
 .fade{animation:fadein .4s ease}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
-.modal-box{background:#0A0E14;border:1px solid #1A2A3A;border-radius:8px;padding:32px;max-width:420px;width:90%;animation:fadein .3s ease;text-align:center}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px)}
+.modal-box{background:#0A0E14;border:1px solid #1A2A3A;border-radius:8px;padding:32px;max-width:480px;width:92%;animation:fadein .3s ease}
+input[type=password],input[type=text]{background:#06080C;border:1px solid #1A2A3A;color:#C8DCF0;padding:10px 14px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;width:100%;outline:none;letter-spacing:1px;margin-top:6px}
+input:focus{border-color:#2A4060}
 </style>
 </head>
 <body>
 <div class="scanline"></div>
 
-<div class="modal-bg" id="loginModal" style="display:none">
+<!-- API Key Modal -->
+<div class="modal-bg" id="keyModal">
   <div class="modal-box">
-    <div style="font-size:36px;margin-bottom:12px">◈</div>
-    <div style="color:#C8DCF0;font-size:15px;letter-spacing:3px;margin-bottom:6px">AI SIGNAL SCANNER</div>
-    <div style="color:#2A3A4A;font-size:10px;letter-spacing:2px;margin-bottom:24px">100% FREE · REAL LIVE PRICES · NO API KEY</div>
-    <p style="font-size:11px;color:#3A5068;line-height:1.9;margin-bottom:24px">
-      Uses <strong style="color:#6A9ABD">Puter.js</strong> (free Claude AI) +<br>
-      <strong style="color:#00AAFF">CoinGecko & Metals API</strong> for real live prices.<br>
-      <span style="color:#1A2A3A;font-size:10px">Sign up is instant — just email + password.</span>
-    </p>
-    <button id="loginBtn" style="width:100%;background:linear-gradient(135deg,#0E2030,#0A1825);border:1px solid #2A4060;color:#6A9ABD;padding:13px;border-radius:4px;font-size:12px;letter-spacing:3px;margin-bottom:12px">
-      ▶ SIGN IN / SIGN UP (FREE)
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:32px;margin-bottom:10px">◈</div>
+      <div style="color:#C8DCF0;font-size:15px;letter-spacing:3px;margin-bottom:4px">AI SIGNAL SCANNER</div>
+      <div style="color:#2A3A4A;font-size:10px;letter-spacing:2px">POWERED BY GOOGLE GEMINI · FREE</div>
+    </div>
+
+    <!-- Steps -->
+    <div style="background:#06080C;border:1px solid #0E1820;border-radius:6px;padding:16px;margin-bottom:20px;font-size:10px;line-height:2;color:#3A5068">
+      <div style="color:#4A8AFF;letter-spacing:2px;font-size:9px;margin-bottom:8px">HOW TO GET YOUR FREE API KEY (2 minutes)</div>
+      <div><span style="color:#4A8AFF">1.</span> Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6AAAFF;text-decoration:none">aistudio.google.com/apikey</a></div>
+      <div><span style="color:#4A8AFF">2.</span> Sign in with any Google account</div>
+      <div><span style="color:#4A8AFF">3.</span> Click <strong style="color:#C8DCF0">"Create API Key"</strong></div>
+      <div><span style="color:#4A8AFF">4.</span> Copy the key and paste it below</div>
+      <div style="margin-top:8px;color:#1A2A3A;font-size:9px">✓ Free tier: 1,500 requests/day · No credit card · No billing</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:9px;letter-spacing:2px;color:#2A3A4A">YOUR GEMINI API KEY</div>
+      <div style="position:relative">
+        <input type="password" id="keyInput" placeholder="AIza..." autocomplete="off"/>
+        <button onclick="toggleShow()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#3A5068;font-size:13px;margin-top:3px" id="eyeBtn">👁</button>
+      </div>
+      <div id="keyErr" style="color:#FF5C7A;font-size:9px;margin-top:6px;display:none"></div>
+    </div>
+
+    <button onclick="saveKey()" style="width:100%;background:linear-gradient(135deg,#1A3A6A,#0E2040);border:1px solid #2A5090;color:#6AAAFF;padding:13px;border-radius:4px;font-size:12px;letter-spacing:3px;margin-bottom:12px">
+      ▶ START SCANNING FREE
     </button>
-    <div style="font-size:9px;color:#1A2A3A;line-height:1.8">Powered by puter.com · Free cloud AI</div>
+
+    <div style="font-size:9px;color:#1A2A3A;text-align:center;line-height:1.8">
+      Key saved in your browser only · Never sent to any server except Google<br>
+      <span style="color:#0E1820">Gemini 2.0 Flash · Free · Fast · Accurate</span>
+    </div>
   </div>
 </div>
 
+<!-- Main App -->
 <div id="app" style="display:none">
   <div class="hdr">
     <div style="display:flex;align-items:center;gap:12px">
@@ -72,7 +97,7 @@ button:disabled{cursor:not-allowed}
       <div>
         <div style="font-size:9px;letter-spacing:4px;color:#1A2A3A">AI TRADING SIGNAL SCANNER</div>
         <div style="font-size:15px;font-weight:500;color:#C8DCF0;letter-spacing:1px;margin-top:1px">
-          <span id="hdrLabel">BTC/USD</span>
+          <span id="hdrLabel" style="color:#F7931A">BTC/USD</span>
           <span id="hdrTf" style="font-size:10px;color:#1A3048;margin-left:8px">[5M]</span>
           <span class="free-badge" style="margin-left:8px">FREE</span>
           <span class="live-badge" style="margin-left:4px">LIVE PRICE</span>
@@ -84,13 +109,12 @@ button:disabled{cursor:not-allowed}
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#FFBE00;animation:pulse .7s infinite;vertical-align:middle;margin-right:6px"></span>
         <span id="loadTxt">Scanning…</span>
       </div>
-      <button id="scanBtn" style="background:linear-gradient(135deg,#0E2030,#0A1825);border:1px solid #2A4060;color:#6A9ABD;padding:8px 22px;font-size:11px;letter-spacing:2px;border-radius:3px">
-        ▶ SCAN MARKET
-      </button>
+      <button id="scanBtn" style="background:linear-gradient(135deg,#0E2030,#0A1825);border:1px solid #2A4060;color:#6A9ABD;padding:8px 22px;font-size:11px;letter-spacing:2px;border-radius:3px">▶ SCAN MARKET</button>
+      <button onclick="clearKey()" title="Change API key" style="background:none;border:1px solid #0E1820;color:#1A2A3A;padding:8px 10px;border-radius:3px;font-size:11px">⚙</button>
     </div>
   </div>
 
-  <div class="ticker-wrap"><div class="ticker-inner" id="ticker"></div></div>
+  <div class="ticker-wrap"><div class="ticker-inner" id="ticker">Loading live prices…</div></div>
 
   <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-width:960px;margin:0 auto">
     <div class="tab-wrap">
@@ -103,17 +127,17 @@ button:disabled{cursor:not-allowed}
     </div>
 
     <!-- Live price strip -->
-    <div id="priceStrip" class="card" style="display:none;padding:10px 16px;background:#06080C;border-color:#00AAFF22">
+    <div id="priceStrip" class="card" style="display:none;padding:10px 16px;background:#06080C;border-color:#4A8AFF22">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A">LIVE MARKET PRICE</div>
-          <div style="width:6px;height:6px;border-radius:50%;background:#00AAFF;animation:pulse .7s infinite"></div>
+          <div style="width:6px;height:6px;border-radius:50%;background:#4A8AFF;animation:pulse .7s infinite"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <div id="stripPrice" style="font-size:18px;font-weight:500;color:#C8DCF0">—</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div id="stripPrice" style="font-size:20px;font-weight:500;color:#C8DCF0">—</div>
           <div id="stripChange" style="font-size:11px">—</div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
-            <div id="stripSource" style="font-size:9px;color:#00AAFF;letter-spacing:1px">—</div>
+          <div>
+            <div id="stripSource" style="font-size:9px;color:#4A8AFF;letter-spacing:1px">—</div>
             <div id="stripTime"   style="font-size:8px;color:#1A2A3A;letter-spacing:1px">—</div>
           </div>
         </div>
@@ -134,7 +158,7 @@ button:disabled{cursor:not-allowed}
         <div class="load-bar" id="lb3" style="height:14px"></div>
       </div>
       <div id="loadLabel" style="color:#FFBE00;font-size:11px;letter-spacing:3px;margin-top:16px">Fetching live price…</div>
-      <div id="loadSub" style="color:#1A2A3A;font-size:10px;margin-top:6px"></div>
+      <div id="loadSub"   style="color:#1A2A3A;font-size:10px;margin-top:6px"></div>
     </div>
 
     <div id="errBox" class="card fade" style="display:none;background:#0E0810;border-color:#FF205044">
@@ -145,29 +169,32 @@ button:disabled{cursor:not-allowed}
     <div id="resultWrap" style="display:none;flex-direction:column;gap:10px" class="fade">
       <div id="sigBanner" class="card sig-grid" style="border-left-width:3px;border-left-style:solid">
         <div>
-          <div id="sigMeta" style="font-size:9px;letter-spacing:4px;color:#1A2A3A;margin-bottom:8px">SIGNAL</div>
-          <div id="sigLabel" style="font-size:26px;font-weight:500;letter-spacing:2px;margin-bottom:8px;color:#3A5068">— WAITING</div>
+          <div id="sigMeta"    style="font-size:9px;letter-spacing:4px;color:#1A2A3A;margin-bottom:8px">SIGNAL</div>
+          <div id="sigLabel"   style="font-size:26px;font-weight:500;letter-spacing:2px;margin-bottom:8px;color:#3A5068">— WAITING</div>
           <div id="sigSummary" style="font-size:11px;color:#3A5068;line-height:1.7;max-width:260px"></div>
         </div>
         <div style="text-align:center">
           <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:6px">CONFIDENCE</div>
           <svg viewBox="0 0 80 80" width="80" height="80">
             <circle cx="40" cy="40" r="30" fill="none" stroke="#0E1820" stroke-width="7"/>
-            <circle id="meterArc" cx="40" cy="40" r="30" fill="none" stroke="#00CC70" stroke-width="7" stroke-linecap="round" transform="rotate(-90 40 40)" stroke-dasharray="0 188.5" style="transition:stroke-dasharray .6s ease"/>
-            <text id="meterTxt" x="40" y="45" text-anchor="middle" fill="#00CC70" style="font-size:14px;font-family:monospace;font-weight:bold">—</text>
+            <circle id="meterArc" cx="40" cy="40" r="30" fill="none" stroke="#00CC70" stroke-width="7"
+              stroke-linecap="round" transform="rotate(-90 40 40)" stroke-dasharray="0 188.5"
+              style="transition:stroke-dasharray .6s ease"/>
+            <text id="meterTxt" x="40" y="45" text-anchor="middle" fill="#00CC70"
+              style="font-size:14px;font-family:monospace;font-weight:bold">—</text>
           </svg>
         </div>
         <div>
           <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:6px">LIVE PRICE</div>
-          <div id="priceVal" style="font-size:20px;color:#C8DCF0;font-weight:500;letter-spacing:1px">—</div>
-          <div id="priceAsset" style="font-size:10px;color:#1A2A3A;margin-top:3px"></div>
-          <div id="priceSource" style="font-size:8px;color:#00AAFF;margin-top:2px;letter-spacing:1px"></div>
+          <div id="priceVal"    style="font-size:20px;color:#C8DCF0;font-weight:500;letter-spacing:1px">—</div>
+          <div id="priceAsset"  style="font-size:10px;color:#1A2A3A;margin-top:3px"></div>
+          <div id="priceSource" style="font-size:8px;color:#4A8AFF;margin-top:2px;letter-spacing:1px"></div>
         </div>
         <div id="dirBox" style="border-radius:4px;padding:14px 18px;text-align:center;min-width:140px;background:#080C12;border:1px solid #1A2A3A">
           <div style="font-size:9px;letter-spacing:2px;color:#1A2A3A;margin-bottom:8px">DIRECTION</div>
-          <div id="dirIcon" style="font-size:22px">⏳</div>
+          <div id="dirIcon"  style="font-size:22px">⏳</div>
           <div id="dirLabel" style="font-size:12px;font-weight:500;margin-top:4px;letter-spacing:1px;color:#FFBE00">WAIT</div>
-          <div id="dirSub" style="font-size:9px;margin-top:4px;color:#2A3A4A;line-height:1.5">No clear trend</div>
+          <div id="dirSub"   style="font-size:9px;margin-top:4px;color:#2A3A4A;line-height:1.5">No clear trend</div>
         </div>
       </div>
 
@@ -198,189 +225,144 @@ button:disabled{cursor:not-allowed}
         ⚠ AI-POWERED · REAL LIVE PRICES<br>NOT FINANCIAL ADVICE<br>ALWAYS USE DEMO FIRST
       </div>
       <div class="card" style="font-size:9px;color:#1A2A3A;line-height:1.8">
-        <div style="color:#2A3A4A;margin-bottom:3px">PRICE SOURCES</div>
-        CoinGecko (crypto)<br>metals-api / open-price (gold/silver)
+        <div style="color:#2A3A4A;margin-bottom:3px">AI ENGINE</div>
+        Google Gemini 2.0 Flash<br>
+        <span style="color:#0E1820">Free · 1,500 req/day</span>
       </div>
     </div>
     <div style="text-align:center;padding:8px 0;font-size:9px;color:#0E1820;letter-spacing:2px">
-      FREE · REAL LIVE PRICES · POWERED BY PUTER.JS + CLAUDE AI
+      FREE · REAL LIVE PRICES · GOOGLE GEMINI AI
     </div>
   </div>
 </div>
 
 <script>
-/* ── Constants ── */
-const ASSETS = [
-  {symbol:"BTC",    label:"BTC/USD",    accent:"#F7931A",type:"crypto",  cgId:"bitcoin"},
-  {symbol:"ETH",    label:"ETH/USD",    accent:"#627EEA",type:"crypto",  cgId:"ethereum"},
-  {symbol:"BNB",    label:"BNB/USD",    accent:"#F3BA2F",type:"crypto",  cgId:"binancecoin"},
-  {symbol:"SOL",    label:"SOL/USD",    accent:"#9945FF",type:"crypto",  cgId:"solana"},
-  {symbol:"XRP",    label:"XRP/USD",    accent:"#00AAE4",type:"crypto",  cgId:"ripple"},
-  {symbol:"DOGE",   label:"DOGE/USD",   accent:"#C2A633",type:"crypto",  cgId:"dogecoin"},
+/* ── Data ── */
+const ASSETS=[
+  {symbol:"BTC",    label:"BTC/USD",    accent:"#F7931A",type:"crypto",   cgId:"bitcoin"},
+  {symbol:"ETH",    label:"ETH/USD",    accent:"#627EEA",type:"crypto",   cgId:"ethereum"},
+  {symbol:"BNB",    label:"BNB/USD",    accent:"#F3BA2F",type:"crypto",   cgId:"binancecoin"},
+  {symbol:"SOL",    label:"SOL/USD",    accent:"#9945FF",type:"crypto",   cgId:"solana"},
+  {symbol:"XRP",    label:"XRP/USD",    accent:"#00AAE4",type:"crypto",   cgId:"ripple"},
+  {symbol:"DOGE",   label:"DOGE/USD",   accent:"#C2A633",type:"crypto",   cgId:"dogecoin"},
   {symbol:"XAUUSD", label:"GOLD/USD",   accent:"#FFD700",type:"commodity",cgId:"gold"},
   {symbol:"XAGUSD", label:"SILVER/USD", accent:"#C0C0C0",type:"commodity",cgId:"silver"},
 ];
-const TF_SHORT   = ["1M","5M","15M","30M","1H","4H"];
-const TIMEFRAMES = ["1 minute","5 minutes","15 minutes","30 minutes","1 hour","4 hours"];
+const TF_SHORT  =["1M","5M","15M","30M","1H","4H"];
+const TIMEFRAMES=["1 minute","5 minutes","15 minutes","30 minutes","1 hour","4 hours"];
 const SIG_META={
-  "STRONG BUY":{color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
-  "BUY":       {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
-  "NEUTRAL":   {color:"#FFBE00",glow:"#FFBE0018",icon:"━"},
-  "SELL":      {color:"#FF5C7A",glow:"#FF5C7A22",icon:"▼"},
+  "STRONG BUY": {color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
+  "BUY":        {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
+  "NEUTRAL":    {color:"#FFBE00",glow:"#FFBE0018",icon:"━"},
+  "SELL":       {color:"#FF5C7A",glow:"#FF5C7A22",icon:"▼"},
   "STRONG SELL":{color:"#FF2050",glow:"#FF205033",icon:"▼▼"},
 };
 const IND_C={BULLISH:"#00CC70",BEARISH:"#FF5C7A",UPTREND:"#00CC70",DOWNTREND:"#FF5C7A",UPPER:"#FF5C7A",LOWER:"#00CC70",NEUTRAL:"#3A5068",MIDDLE:"#3A5068"};
 const STEPS=["Fetching live price…","Analyzing market data…","Calculating indicators…","Generating signal…"];
 
-let tab="CRYPTO",asset=ASSETS[0],tfIdx=1,loading=false,history=[],loadStep=0,loadIv=null;
-let livePrice=null, liveChange=null, livePriceSource="";
+let tab="CRYPTO",asset=ASSETS[0],tfIdx=1,loading=false,scanHistory=[],loadStep=0,loadIv=null;
+let livePrice=null,liveChange=null,livePriceSource="";
 
-/* ═══════════════════════════════════════════
-   LIVE PRICE FETCHER
-   All APIs below support browser CORS calls.
-   Multiple fallbacks per asset type.
-═══════════════════════════════════════════ */
-async function fetchLivePrice(a) {
-  if (a.type === "crypto") {
-    // 1. Binance — best CORS support, most accurate
-    try {
-      const pair = a.symbol + "USDT";
-      const ts = Date.now(); // cache bust
-      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}&_=${ts}`, {cache:"no-store"});
-      if (res.ok) {
-        const data = await res.json();
-        if (data.lastPrice) {
-          return {price: parseFloat(data.lastPrice), change: parseFloat(data.priceChangePercent), source:"Binance"};
-        }
-      }
-    } catch(e) { console.warn("Binance failed:", e); }
+/* ── Key management ── */
+const KEY_STORE="gemini_api_key_v1";
+const getKey=()=>localStorage.getItem(KEY_STORE)||"";
+const saveKey=()=>{
+  const k=document.getElementById("keyInput").value.trim();
+  if(!k.startsWith("AIza")){showKeyErr("Key must start with AIza…");return;}
+  localStorage.setItem(KEY_STORE,k);
+  document.getElementById("keyModal").style.display="none";
+  document.getElementById("app").style.display="block";
+  refreshTicker();
+};
+const clearKey=()=>{localStorage.removeItem(KEY_STORE);location.reload();};
+const showKeyErr=m=>{const e=document.getElementById("keyErr");e.textContent=m;e.style.display="block"};
+const toggleShow=()=>{
+  const i=document.getElementById("keyInput");
+  const b=document.getElementById("eyeBtn");
+  i.type=i.type==="password"?"text":"password";
+  b.textContent=i.type==="password"?"👁":"🙈";
+};
+document.getElementById("keyInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveKey();});
 
-    // 2. CoinGecko free (may be rate-limited)
-    try {
-      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${a.cgId}&vs_currencies=usd&include_24hr_change=true`;
-      const res = await fetch(url, {cache:"no-store"});
-      if (res.ok) {
-        const data = await res.json();
-        const d = data[a.cgId];
-        if (d && d.usd) {
-          return {price: d.usd, change: d.usd_24h_change ? +d.usd_24h_change.toFixed(2) : null, source:"CoinGecko"};
-        }
-      }
-    } catch(e) { console.warn("CoinGecko failed:", e); }
-
+/* ── Live price fetcher ── */
+async function fetchLivePrice(a){
+  const ts=Date.now();
+  if(a.type==="crypto"){
+    // 1. Binance — most accurate, best CORS
+    try{
+      const res=await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${a.symbol}USDT&_=${ts}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();if(d.lastPrice)return{price:parseFloat(d.lastPrice),change:parseFloat(d.priceChangePercent),source:"Binance"};}
+    }catch(e){}
+    // 2. CoinGecko
+    try{
+      const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${a.cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const p=d[a.cgId];if(p&&p.usd)return{price:p.usd,change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}
+    }catch(e){}
     // 3. Kraken
-    try {
-      const krakenMap = {BTC:"XXBTZUSD",ETH:"XETHZUSD",SOL:"SOLUSD",XRP:"XXRPZUSD",DOGE:"XDGUSD",BNB:"BNBUSD"};
-      const pair = krakenMap[a.symbol];
-      if (pair) {
-        const res = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`, {cache:"no-store"});
-        if (res.ok) {
-          const data = await res.json();
-          const key = Object.keys(data.result||{})[0];
-          if (key) {
-            const price = parseFloat(data.result[key].c[0]);
-            return {price, change: null, source:"Kraken"};
-          }
-        }
-      }
-    } catch(e) { console.warn("Kraken failed:", e); }
+    try{
+      const km={BTC:"XXBTZUSD",ETH:"XETHZUSD",SOL:"SOLUSD",XRP:"XXRPZUSD",DOGE:"XDGUSD",BNB:"BNBUSD"};
+      const pair=km[a.symbol];
+      if(pair){const res=await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`,{cache:"no-store"});if(res.ok){const d=await res.json();const key=Object.keys(d.result||{})[0];if(key){const price=parseFloat(d.result[key].c[0]);return{price,change:null,source:"Kraken"};}}}
+    }catch(e){}
   }
-
-  if (a.type === "commodity") {
-    // Gold & Silver: use GoldAPI.io free tier via allorigins CORS proxy
-    // Primary: gold-api.com (free, CORS-friendly)
-    try {
-      const symbol = a.symbol === "XAUUSD" ? "XAU" : "XAG";
-      const res = await fetch(`https://www.goldapi.io/api/${symbol}/USD`, {
-        cache: "no-store",
-        headers: {"x-access-token": "goldapi-free-demo"}
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.price) return {price: +data.price.toFixed(2), change: data.ch_percent||null, source:"GoldAPI"};
+  if(a.type==="commodity"){
+    // 1. Bybit linear — XAU/USDT and XAG/USDT exist on Bybit
+    try{
+      const sym=a.symbol==="XAUUSD"?"XAUUSDT":"XAGUSDT";
+      const res=await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const item=d?.result?.list?.[0];if(item&&item.lastPrice)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt)*100,source:"Bybit"};}
+    }catch(e){}
+    // 2. Try a CORS-friendly metals proxy
+    try{
+      const sym=a.symbol==="XAUUSD"?"XAU":"XAG";
+      const res=await fetch(`https://api.metals.dev/v1/latest?api_key=demo&currency=USD&unit=toz`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const p=d?.metals?.[sym.toLowerCase()];if(p)return{price:+p.toFixed(2),change:null,source:"metals.dev"};}
+    }catch(e){}
+    // 3. GoldAPI demo
+    try{
+      const sym=a.symbol==="XAUUSD"?"XAU":"XAG";
+      const res=await fetch(`https://www.goldapi.io/api/${sym}/USD`,{cache:"no-store",headers:{"x-access-token":"goldapi-2uxdlpvlua4ioxj-io"}});
+      if(res.ok){const d=await res.json();if(d.price)return{price:+d.price.toFixed(2),change:d.ch_percent||null,source:"GoldAPI"};}
+    }catch(e){}
+    // 4. Gemini AI fallback — ask AI directly with strict number-only response
+    try{
+      const key=getKey();
+      if(key){
+        const metalName=a.symbol==="XAUUSD"?"gold (XAU) spot price per troy ounce in USD":"silver (XAG) spot price per troy ounce in USD";
+        const body={contents:[{parts:[{text:`What is the current ${metalName}? Reply with ONLY the number. No symbols, no text, no explanation. Just the number like: 3021.50`}]}]};
+        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+        if(res.ok){const d=await res.json();const txt=(d?.candidates?.[0]?.content?.parts?.[0]?.text||"").trim();const num=parseFloat(txt.replace(/[^0-9.]/g,""));const isGold=a.symbol==="XAUUSD";if(!isNaN(num)&&num>(isGold?1500:15)&&num<(isGold?5000:200))return{price:+num.toFixed(2),change:null,source:"Gemini-est"};}
       }
-    } catch(e) { console.warn("goldapi failed:", e); }
-
-    // Fallback 1: Use Puter AI itself to get the price via a quick search
-    // This is our nuclear option — ask the AI with strict instructions
-    try {
-      const metalName = a.symbol === "XAUUSD" ? "gold XAU/USD spot price" : "silver XAG/USD spot price";
-      const resp = await puter.ai.chat(
-        `What is the current ${metalName} in USD right now? Reply with ONLY the number, nothing else. Example: 3021.50`,
-        {model:"claude-sonnet-4-5"}
-      );
-      function extractText(r){
-        if(!r) return "";
-        if(typeof r==="string") return r;
-        if(Array.isArray(r)) return r.map(b=>b&&b.text?b.text:"").filter(Boolean).join("");
-        if(r.message!==undefined) return extractText(r.message&&r.message.content!==undefined?r.message.content:r.message);
-        if(r.content!==undefined) return extractText(r.content);
-        if(typeof r.text==="string") return r.text;
-        return JSON.stringify(r);
-      }
-      const text = extractText(resp).trim();
-      const num = parseFloat(text.replace(/[^0-9.]/g, ""));
-      // Sanity check: gold should be 1500-4000, silver 20-60
-      const isGold = a.symbol === "XAUUSD";
-      if (!isNaN(num) && num > (isGold?1500:15) && num < (isGold?5000:200)) {
-        return {price: +num.toFixed(2), change: null, source:"AI-estimate"};
-      }
-    } catch(e) { console.warn("AI price fallback failed:", e); }
-
-    // Fallback 2: fxratesapi (CORS friendly)
-    try {
-      const metalSymbol = a.symbol === "XAUUSD" ? "XAU" : "XAG";
-      const res = await fetch(`https://api.fxratesapi.com/latest?currencies=${metalSymbol}&resolution=1m&amount=1&places=2&format=json`, {cache:"no-store"});
-      if (res.ok) {
-        const data = await res.json();
-        if (data.rates && data.rates[metalSymbol]) {
-          // This returns USD per metal unit inverse, need to invert
-          const rate = 1 / data.rates[metalSymbol];
-          return {price: +rate.toFixed(2), change: null, source:"FXRates"};
-        }
-      }
-    } catch(e) { console.warn("fxratesapi failed:", e); }
+    }catch(e){}
   }
-
   return null;
 }
 
-/* ── Ticker builder ── */
+/* ── Ticker ── */
 function buildTicker(prices){
-  const items = [...prices, ...prices];
-  document.getElementById("ticker").innerHTML = items.map(p=>`
+  const all=[...prices,...prices];
+  document.getElementById("ticker").innerHTML=all.map(p=>`
     <span style="display:inline-block;margin-right:32px;font-size:10px;letter-spacing:1px">
       <span style="color:#2A3A4A;margin-right:6px">${p.label}</span>
-      <span style="color:#C8DCF0;margin-right:4px">$${typeof p.price==="number"?p.price.toLocaleString("en",{maximumFractionDigits:p.price>100?2:4}):p.price}</span>
+      <span style="color:#C8DCF0;margin-right:4px">${typeof p.price==="number"?"$"+p.price.toLocaleString("en",{maximumFractionDigits:p.price>100?2:4}):"—"}</span>
       ${p.change!=null?`<span style="color:${p.change>=0?"#00CC70":"#FF5C7A"}">${p.change>=0?"▲":"▼"} ${Math.abs(p.change).toFixed(2)}%</span>`:""}
     </span>`).join("");
 }
-
-/* Fetch ticker prices — all assets including Gold/Silver, auto-refresh every 30s */
 async function refreshTicker(){
-  const results = await Promise.allSettled(ASSETS.map(a=>fetchLivePrice(a)));
-  const prices = ASSETS.map((a,i)=>{
-    const r = results[i];
-    return {label:a.label, price: r.status==="fulfilled"&&r.value ? r.value.price : null, change: r.status==="fulfilled"&&r.value ? r.value.change : null};
-  }).filter(p=>p.price!==null);
-  if(prices.length > 0) buildTicker(prices);
+  const results=await Promise.allSettled(ASSETS.map(a=>fetchLivePrice(a)));
+  const prices=ASSETS.map((a,i)=>{const r=results[i];return{label:a.label,price:r.status==="fulfilled"&&r.value?r.value.price:null,change:r.status==="fulfilled"&&r.value?r.value.change:null};}).filter(p=>p.price!==null);
+  if(prices.length>0)buildTicker(prices);
 }
-// Auto-refresh ticker every 30 seconds
-setInterval(refreshTicker, 30000);
+setInterval(refreshTicker,30000);
 
-/* ── Pill builders ── */
+/* ── UI helpers ── */
 function buildAssets(){
-  document.getElementById("assetRow").innerHTML=ASSETS
-    .filter(a=>tab==="CRYPTO"?a.type==="crypto":a.type==="commodity")
-    .map(a=>`<button class="pill ${a.symbol===asset.symbol?"active":""}"
-      style="${a.symbol===asset.symbol?`border-color:${a.accent}44;color:${a.accent}`:""}"
-      onclick="selectAsset('${a.symbol}')">${a.label}</button>`).join("");
+  document.getElementById("assetRow").innerHTML=ASSETS.filter(a=>tab==="CRYPTO"?a.type==="crypto":a.type==="commodity").map(a=>`
+    <button class="pill ${a.symbol===asset.symbol?"active":""}" style="${a.symbol===asset.symbol?`border-color:${a.accent}44;color:${a.accent}`:""}" onclick="selectAsset('${a.symbol}')">${a.label}</button>`).join("");
 }
 function buildTF(){
   document.getElementById("tfRow").innerHTML=TF_SHORT.map((t,i)=>`
-    <button class="pill ${i===tfIdx?"active":""}"
-      style="${i===tfIdx?"border-color:#1A3050;color:#6A9ABD":""}"
-      onclick="selectTF(${i})">${t}</button>`).join("");
+    <button class="pill ${i===tfIdx?"active":""}" style="${i===tfIdx?"border-color:#1A3050;color:#6A9ABD":""}" onclick="selectTF(${i})">${t}</button>`).join("");
 }
 function selectAsset(sym){asset=ASSETS.find(a=>a.symbol===sym);resetResult();updateHeader();buildAssets();}
 function selectTF(i){tfIdx=i;resetResult();buildTF();document.getElementById("hdrTf").textContent=`[${TF_SHORT[i]}]`;}
@@ -399,35 +381,41 @@ function updateHeader(){
 }
 function showOnly(id){
   ["idleBox","loadBox","errBox","resultWrap"].forEach(x=>{
-    const el=document.getElementById(x);
-    el.style.display=x===id?(x==="resultWrap"?"flex":"block"):"none";
+    document.getElementById(x).style.display=x===id?(x==="resultWrap"?"flex":"block"):"none";
   });
 }
-function resetResult(){
-  showOnly("idleBox");
-  document.getElementById("priceStrip").style.display="none";
-  livePrice=null;liveChange=null;
-}
+function resetResult(){showOnly("idleBox");document.getElementById("priceStrip").style.display="none";}
 function setStep(s){
   loadStep=s;
-  document.getElementById("loadLabel").textContent=STEPS[Math.min(s,STEPS.length-1)];
+  const lbl=STEPS[Math.min(s,STEPS.length-1)];
+  document.getElementById("loadLabel").textContent=lbl;
   document.getElementById("loadSub").textContent=`${asset.label} · ${TF_SHORT[tfIdx]}`;
-  document.getElementById("loadTxt").textContent=STEPS[Math.min(s,STEPS.length-1)];
-  [0,1,2,3].forEach(i=>{
-    const bar=document.getElementById("lb"+i);
-    bar.style.height=i<=s?"28px":"14px";
-    bar.style.background=i<=s?"#FFBE00":"#0E1820";
-    bar.style.boxShadow=i<=s?"0 0 8px #FFBE00":"none";
-  });
+  document.getElementById("loadTxt").textContent=lbl;
+  [0,1,2,3].forEach(i=>{const b=document.getElementById("lb"+i);b.style.height=i<=s?"28px":"14px";b.style.background=i<=s?"#FFBE00":"#0E1820";b.style.boxShadow=i<=s?"0 0 8px #FFBE00":"none";});
 }
 
-/* ── Render result ── */
-function renderResult(r, realPrice){
+/* ── Gemini AI call ── */
+async function callGemini(prompt){
+  const key=getKey();
+  const body={
+    contents:[{parts:[{text:prompt}]}],
+    generationConfig:{temperature:0.3,maxOutputTokens:1024}
+  };
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"});
+  if(res.status===400){const e=await res.json();throw new Error("Gemini API error: "+(e?.error?.message||"Bad request"));}
+  if(res.status===403){throw new Error("Invalid API key. Click ⚙ to update it.");}
+  if(!res.ok)throw new Error("Gemini error "+res.status);
+  const data=await res.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text||"";
+}
+
+/* ── Render ── */
+function renderResult(r,realPrice){
   const m=SIG_META[r.signal]||{color:"#3A5068",glow:"#0000",icon:"◌"};
   const C=2*Math.PI*30;
-  // ALWAYS use the real fetched price, override whatever AI said
-  const displayPrice = realPrice || r.price;
-  const decimals = asset.type==="commodity"?2:4;
+  const displayPrice=realPrice||r.price;
+  const decimals=asset.type==="commodity"?2:4;
 
   const banner=document.getElementById("sigBanner");
   banner.style.borderLeftColor=m.color;
@@ -447,7 +435,7 @@ function renderResult(r, realPrice){
 
   document.getElementById("priceVal").textContent="$"+Number(displayPrice).toLocaleString("en",{maximumFractionDigits:decimals});
   document.getElementById("priceAsset").textContent=asset.label;
-  document.getElementById("priceSource").textContent=livePriceSource ? "● "+livePriceSource : "";
+  document.getElementById("priceSource").textContent=livePriceSource?"● "+livePriceSource:"";
 
   const dirBox=document.getElementById("dirBox");
   dirBox.style.borderColor=`${m.color}22`;
@@ -457,7 +445,7 @@ function renderResult(r, realPrice){
     document.getElementById("dirLabel").textContent="WAIT";
     document.getElementById("dirLabel").style.color="#FFBE00";
     document.getElementById("dirSub").textContent="No clear trend";
-  } else {
+  }else{
     const isBuy=r.signal.includes("BUY");
     document.getElementById("dirIcon").textContent=isBuy?"📈":"📉";
     document.getElementById("dirLabel").textContent=isBuy?"CALL / BUY ↑":"PUT / SELL ↓";
@@ -478,15 +466,11 @@ function renderResult(r, realPrice){
       <div style="font-size:9px;letter-spacing:1px;color:${ind.color}">${ind.sub}</div>
     </div>`).join("");
 
-  const sc=r.score||0;
-  const pctSc=((Math.min(Math.max(sc,-6),6)+6)/12)*100;
-  const scColor=sc>=2?"#00CC70":sc<=-2?"#FF5C7A":"#FFBE00";
+  const sc=r.score||0,pctSc=((Math.min(Math.max(sc,-6),6)+6)/12)*100,scColor=sc>=2?"#00CC70":sc<=-2?"#FF5C7A":"#FFBE00";
   document.getElementById("scoreVal").textContent=(sc>0?"+":"")+sc+" / 6";
   const fill=document.getElementById("scoreFill");
-  fill.style.left=(pctSc<50?pctSc:50)+"%";
-  fill.style.width=Math.abs(pctSc-50)+"%";
-  fill.style.background=scColor;
-  fill.style.boxShadow=`0 0 6px ${scColor}`;
+  fill.style.left=(pctSc<50?pctSc:50)+"%";fill.style.width=Math.abs(pctSc-50)+"%";
+  fill.style.background=scColor;fill.style.boxShadow=`0 0 6px ${scColor}`;
   document.getElementById("scoreLbl").textContent=sc>=4?"VERY BULLISH":sc>=2?"BULLISH":sc<=-4?"VERY BEARISH":sc<=-2?"BEARISH":"MIXED";
   document.getElementById("scoreLbl").style.color=scColor;
 
@@ -497,172 +481,122 @@ function renderResult(r, realPrice){
     </div>`).join("");
 
   const rb=document.getElementById("rescanBtn");
-  rb.textContent=`↻ RESCAN ${asset.label}`;
-  rb.style.color=m.color;
-  rb.style.borderColor=`${m.color}33`;
-  rb.style.boxShadow=`0 0 16px ${m.glow}`;
-
+  rb.textContent=`↻ RESCAN ${asset.label}`;rb.style.color=m.color;
+  rb.style.borderColor=`${m.color}33`;rb.style.boxShadow=`0 0 16px ${m.glow}`;
   showOnly("resultWrap");
 }
 
-function pushHistory(r, realPrice){
-  const displayPrice = realPrice || r.price;
-  history.unshift({signal:r.signal,price:displayPrice,time:r.time,asset:asset.label,tf:TF_SHORT[tfIdx]});
-  if(history.length>10) history.pop();
-  const wrap=document.getElementById("histWrap");
-  wrap.style.display="block";
-  document.getElementById("histList").innerHTML=history.map((h,i)=>{
+function pushHistory(r,realPrice){
+  const displayPrice=realPrice||r.price;
+  scanHistory.unshift({signal:r.signal,price:displayPrice,time:r.time,asset:asset.label,tf:TF_SHORT[tfIdx]});
+  if(scanHistory.length>10)scanHistory.pop();
+  document.getElementById("histWrap").style.display="block";
+  document.getElementById("histList").innerHTML=scanHistory.map((h,i)=>{
     const hm=SIG_META[h.signal]||{color:"#3A5068",icon:"◌"};
-    const decimals=h.price>500?2:4;
+    const dec=h.price>500?2:4;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:${i===0?"#0A0E14":"transparent"};border-radius:2px;opacity:${1-i*0.08}">
       <span style="font-size:9px;color:#1A2A3A;min-width:70px">${h.time}</span>
       <span style="font-size:10px;color:#1A2A3A;min-width:14px">${h.tf}</span>
       <span style="font-size:10px;color:#2A3A4A;min-width:75px;margin-left:8px">${h.asset}</span>
       <span style="font-size:10px;color:${hm.color};flex:1;letter-spacing:1px">${hm.icon} ${h.signal}</span>
-      <span style="font-size:10px;color:#00AAFF">$${Number(h.price).toLocaleString("en",{maximumFractionDigits:decimals})}</span>
+      <span style="font-size:10px;color:#4A8AFF">$${Number(h.price).toLocaleString("en",{maximumFractionDigits:dec})}</span>
     </div>`;
   }).join("");
 }
 
-/* ═══════════════════════════════════════════
-   MAIN SCAN FUNCTION
-   Step 1: Fetch REAL price from API
-   Step 2: Send price + context to Claude
-   Step 3: Claude does analysis only, not pricing
-═══════════════════════════════════════════ */
+/* ── Main scan ── */
 async function scan(){
-  if(loading) return;
+  if(loading)return;
   loading=true;
   const btn=document.getElementById("scanBtn");
-  btn.textContent="···"; btn.disabled=true;
+  btn.textContent="···";btn.disabled=true;
   document.getElementById("loadMsg").style.display="inline";
-  showOnly("loadBox");
-  clearInterval(loadIv);
-  loadStep=0; setStep(0);
+  showOnly("loadBox");clearInterval(loadIv);
+  loadStep=0;setStep(0);
   loadIv=setInterval(()=>setStep(Math.min(loadStep+1,STEPS.length-1)),2000);
 
-  try {
-    // ── STEP 1: Fetch real live price ──────────────────────
+  try{
+    // Step 1: Real price from API
     setStep(0);
-    const priceData = await fetchLivePrice(asset);
+    const priceData=await fetchLivePrice(asset);
+    if(!priceData)throw new Error(`Could not fetch live price for ${asset.label}. All price APIs failed — check internet connection.`);
 
-    if (!priceData) throw new Error(`Could not fetch live price for ${asset.label}. Check your internet connection and try again.`);
-
-    livePrice = priceData.price;
-    liveChange = priceData.change;
-    livePriceSource = priceData.source;
-
-    // Show price strip immediately
+    livePrice=priceData.price;liveChange=priceData.change;livePriceSource=priceData.source;
+    const decimals=asset.type==="commodity"?2:4;
     const strip=document.getElementById("priceStrip");
     strip.style.display="block";
-    const decimals=asset.type==="commodity"?2:4;
     document.getElementById("stripPrice").textContent="$"+livePrice.toLocaleString("en",{maximumFractionDigits:decimals});
     document.getElementById("stripChange").textContent=liveChange!=null?`${liveChange>=0?"▲":"▼"} ${Math.abs(liveChange).toFixed(2)}%`:"";
     document.getElementById("stripChange").style.color=liveChange!=null?(liveChange>=0?"#00CC70":"#FF5C7A"):"#3A5068";
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
     document.getElementById("stripSource").textContent="via "+livePriceSource;
-    document.getElementById("stripTime").textContent="fetched at "+timeStr;
+    const now=new Date();
+    document.getElementById("stripTime").textContent="fetched at "+now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
 
-    // ── STEP 2: Ask Claude for analysis (NOT price) ────────
+    // Step 2: Gemini analysis
     setStep(1);
     const assetName=asset.symbol==="XAUUSD"?"Gold (XAU/USD)":asset.symbol==="XAGUSD"?"Silver (XAG/USD)":`${asset.symbol}/USD`;
-    const changeText = liveChange!=null ? `The 24h price change is ${liveChange>0?"+":""}${liveChange.toFixed(2)}%.` : "";
+    const changeCtx=liveChange!=null?`24h change: ${liveChange>0?"+":""}${liveChange.toFixed(2)}% (${liveChange>2?"strong uptrend":liveChange>0?"mild uptrend":liveChange<-2?"strong downtrend":"mild downtrend"}).`:"";
 
     const prompt=`You are a professional trading signal analyst.
 
-CONFIRMED LIVE MARKET DATA (fetched right now from ${livePriceSource}):
-- Asset: ${assetName}
-- Current price: $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} USD (THIS IS THE REAL PRICE — use this exact number)
-- Timeframe: ${TIMEFRAMES[tfIdx]}
-- Time: ${new Date().toUTCString()}
-${changeText}
+LIVE MARKET DATA (fetched right now from ${livePriceSource}):
+Asset: ${assetName}
+Current price: $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} USD
+Timeframe: ${TIMEFRAMES[tfIdx]}
+Time: ${new Date().toUTCString()}
+${changeCtx}
+${asset.type==="commodity"?"Context: Gold/Silver prices are driven by USD strength, inflation expectations, and Fed policy.":""}
 
-Using this confirmed live price of $${livePrice}, analyze the ${TIMEFRAMES[tfIdx]} timeframe and estimate:
-- RSI(14): ${liveChange!=null?(Math.abs(liveChange)>5?(liveChange>0?"likely 60-75 (strong move up)":"likely 25-40 (strong move down)"):"likely 45-55 (mild movement)"):"estimate based on price action"}
-- MACD momentum direction
-- EMA 9 vs EMA 21 relationship  
-- Bollinger Band position
-${asset.type==="commodity"?"Consider: gold/silver are affected by USD strength, inflation, and Fed policy.":""}
+Based on this CONFIRMED live price of $${livePrice}, analyze the ${TIMEFRAMES[tfIdx]} timeframe:
+- RSI(14): estimate from the 24h momentum${liveChange!=null?(Math.abs(liveChange)>3?(liveChange>0?" — strong up move suggests RSI ~65-75":" — strong down move suggests RSI ~25-35"):" — mild move suggests RSI ~45-55"):""}
+- MACD: is momentum building or fading?
+- EMA 9 vs 21: short-term trend direction
+- Bollinger Bands: where is price relative to recent range?
 
-Rules:
-1. The "price" field MUST be exactly ${livePrice} — do not change it
-2. Base your signal on the ${liveChange!=null?(liveChange>0?"bullish":"bearish"):"current"} momentum implied by the live data
-3. Be specific in reasons — mention the actual price $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}
+RULES:
+1. "price" field MUST be exactly ${livePrice}
+2. Be specific — reference "$${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}" in your summary
+3. Give 3-4 concrete reasons based on the live data
 
-Respond ONLY with JSON, no markdown:
-{"signal":"BUY","confidence":65,"price":${livePrice},"score":3,"rsi":58.0,"macd":"BULLISH","ema":"UPTREND","bb":"MIDDLE","reasons":[{"txt":"Specific reason mentioning $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} and market conditions","t":"buy"}],"summary":"One sentence summary mentioning the live price $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}."}`;
+Respond ONLY with raw JSON (no markdown, no backticks):
+{"signal":"BUY","confidence":65,"price":${livePrice},"score":3,"rsi":58.5,"macd":"BULLISH","ema":"UPTREND","bb":"MIDDLE","reasons":[{"txt":"Specific observation about $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} price action","t":"buy"}],"summary":"One sentence with the actual price $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}."}`;
 
     setStep(2);
-    const resp = await puter.ai.chat(prompt, {model:"claude-sonnet-4-5"});
-
-    function extractText(r){
-      if(!r) return "";
-      if(typeof r==="string") return r;
-      if(Array.isArray(r)) return r.map(b=>b&&b.text?b.text:"").filter(Boolean).join("\n");
-      if(r.message!==undefined) return extractText(r.message&&r.message.content!==undefined?r.message.content:r.message);
-      if(r.content!==undefined) return extractText(r.content);
-      if(typeof r.text==="string") return r.text;
-      return JSON.stringify(r);
-    }
-    const text=extractText(resp);
+    const text=await callGemini(prompt);
     const match=text.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error("No JSON found. Response: "+text.slice(0,150));
+    if(!match)throw new Error("No JSON in Gemini response: "+text.slice(0,150));
 
     setStep(3);
     const parsed=JSON.parse(match[0]);
     parsed.time=new Date().toLocaleTimeString();
-    // Force the real price regardless of what AI returned
-    parsed.price=livePrice;
+    parsed.price=livePrice; // always override with real price
 
-    renderResult(parsed, livePrice);
-    pushHistory(parsed, livePrice);
+    renderResult(parsed,livePrice);
+    pushHistory(parsed,livePrice);
 
-  } catch(e){
+  }catch(e){
     console.error(e);
     showOnly("errBox");
     document.getElementById("errMsg").textContent="⚠ "+e.message;
   }
-
   clearInterval(loadIv);
-  loading=false;
-  btn.textContent="▶ SCAN MARKET"; btn.disabled=false;
+  loading=false;btn.textContent="▶ SCAN MARKET";btn.disabled=false;
   document.getElementById("loadMsg").style.display="none";
 }
 
-/* ── Auth + Init ── */
-async function init(){
-  // Build UI
-  buildAssets(); buildTF(); updateHeader();
-  buildTicker([
-    {label:"BTC/USD",price:"loading…",change:null},{label:"ETH/USD",price:"loading…",change:null},
-    {label:"SOL/USD",price:"loading…",change:null},{label:"GOLD",price:"loading…",change:null},
-  ]);
-
+/* ── Init ── */
+function init(){
+  buildAssets();buildTF();updateHeader();
   document.getElementById("scanBtn").onclick=scan;
   document.getElementById("rescanBtn").onclick=scan;
-  document.getElementById("loginBtn").onclick=async()=>{
-    try{
-      await puter.auth.signIn();
-      document.getElementById("loginModal").style.display="none";
-      document.getElementById("app").style.display="block";
-      refreshTicker();
-    }catch(e){console.error(e);}
-  };
 
-  try{
-    const signedIn=await puter.auth.isSignedIn();
-    if(signedIn){
-      document.getElementById("app").style.display="block";
-      refreshTicker(); // load real ticker prices
-    } else {
-      document.getElementById("loginModal").style.display="flex";
-    }
-  }catch(e){
-    document.getElementById("loginModal").style.display="flex";
+  const k=getKey();
+  if(k){
+    document.getElementById("keyModal").style.display="none";
+    document.getElementById("app").style.display="block";
+    refreshTicker();
   }
 }
-
 window.addEventListener("load",init);
 </script>
 </body>
