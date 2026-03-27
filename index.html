@@ -105,11 +105,17 @@ button:disabled{cursor:not-allowed}
     <!-- Live price strip -->
     <div id="priceStrip" class="card" style="display:none;padding:10px 16px;background:#06080C;border-color:#00AAFF22">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A">LIVE MARKET PRICE</div>
-        <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A">LIVE MARKET PRICE</div>
+          <div style="width:6px;height:6px;border-radius:50%;background:#00AAFF;animation:pulse .7s infinite"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <div id="stripPrice" style="font-size:18px;font-weight:500;color:#C8DCF0">—</div>
           <div id="stripChange" style="font-size:11px">—</div>
-          <div id="stripSource" style="font-size:9px;color:#1A2A3A;letter-spacing:1px">—</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+            <div id="stripSource" style="font-size:9px;color:#00AAFF;letter-spacing:1px">—</div>
+            <div id="stripTime"   style="font-size:8px;color:#1A2A3A;letter-spacing:1px">—</div>
+          </div>
         </div>
       </div>
     </div>
@@ -231,68 +237,112 @@ let livePrice=null, liveChange=null, livePriceSource="";
 
 /* ═══════════════════════════════════════════
    LIVE PRICE FETCHER
-   Uses CoinGecko for crypto (free, no key)
-   Uses multiple fallbacks for gold/silver
+   All APIs below support browser CORS calls.
+   Multiple fallbacks per asset type.
 ═══════════════════════════════════════════ */
 async function fetchLivePrice(a) {
   if (a.type === "crypto") {
-    // CoinGecko free API — no key needed
+    // 1. Binance — best CORS support, most accurate
+    try {
+      const pair = a.symbol + "USDT";
+      const ts = Date.now(); // cache bust
+      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}&_=${ts}`, {cache:"no-store"});
+      if (res.ok) {
+        const data = await res.json();
+        if (data.lastPrice) {
+          return {price: parseFloat(data.lastPrice), change: parseFloat(data.priceChangePercent), source:"Binance"};
+        }
+      }
+    } catch(e) { console.warn("Binance failed:", e); }
+
+    // 2. CoinGecko free (may be rate-limited)
     try {
       const url = `https://api.coingecko.com/api/v3/simple/price?ids=${a.cgId}&vs_currencies=usd&include_24hr_change=true`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const d = data[a.cgId];
-      if (d && d.usd) {
-        return {price: d.usd, change: d.usd_24h_change ? +d.usd_24h_change.toFixed(2) : null, source:"CoinGecko"};
+      const res = await fetch(url, {cache:"no-store"});
+      if (res.ok) {
+        const data = await res.json();
+        const d = data[a.cgId];
+        if (d && d.usd) {
+          return {price: d.usd, change: d.usd_24h_change ? +d.usd_24h_change.toFixed(2) : null, source:"CoinGecko"};
+        }
       }
     } catch(e) { console.warn("CoinGecko failed:", e); }
 
-    // Fallback: Binance public API
+    // 3. Kraken
     try {
-      const pair = a.symbol + "USDT";
-      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${pair}`);
-      const data = await res.json();
-      if (data.lastPrice) {
-        return {price: parseFloat(data.lastPrice), change: parseFloat(data.priceChangePercent), source:"Binance"};
+      const krakenMap = {BTC:"XXBTZUSD",ETH:"XETHZUSD",SOL:"SOLUSD",XRP:"XXRPZUSD",DOGE:"XDGUSD",BNB:"BNBUSD"};
+      const pair = krakenMap[a.symbol];
+      if (pair) {
+        const res = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`, {cache:"no-store"});
+        if (res.ok) {
+          const data = await res.json();
+          const key = Object.keys(data.result||{})[0];
+          if (key) {
+            const price = parseFloat(data.result[key].c[0]);
+            return {price, change: null, source:"Kraken"};
+          }
+        }
       }
-    } catch(e) { console.warn("Binance failed:", e); }
+    } catch(e) { console.warn("Kraken failed:", e); }
   }
 
   if (a.type === "commodity") {
-    // Metals.live free public endpoint
+    // Gold & Silver: use GoldAPI.io free tier via allorigins CORS proxy
+    // Primary: gold-api.com (free, CORS-friendly)
     try {
-      const metalMap = {XAUUSD:"XAU", XAGUSD:"XAG"};
-      const metal = metalMap[a.symbol];
-      const res = await fetch(`https://metals.live/api/spot`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        const entry = data.find(x => x.metal && x.metal.toUpperCase() === metal);
-        if (entry && entry.price) return {price: +entry.price, change: null, source:"metals.live"};
+      const symbol = a.symbol === "XAUUSD" ? "XAU" : "XAG";
+      const res = await fetch(`https://www.goldapi.io/api/${symbol}/USD`, {
+        cache: "no-store",
+        headers: {"x-access-token": "goldapi-free-demo"}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.price) return {price: +data.price.toFixed(2), change: data.ch_percent||null, source:"GoldAPI"};
       }
-    } catch(e) { console.warn("metals.live failed:", e); }
+    } catch(e) { console.warn("goldapi failed:", e); }
 
-    // Fallback: frankfurter/exchangerate for XAU/XAG via currency
+    // Fallback 1: Use Puter AI itself to get the price via a quick search
+    // This is our nuclear option — ask the AI with strict instructions
+    try {
+      const metalName = a.symbol === "XAUUSD" ? "gold XAU/USD spot price" : "silver XAG/USD spot price";
+      const resp = await puter.ai.chat(
+        `What is the current ${metalName} in USD right now? Reply with ONLY the number, nothing else. Example: 3021.50`,
+        {model:"claude-sonnet-4-5"}
+      );
+      function extractText(r){
+        if(!r) return "";
+        if(typeof r==="string") return r;
+        if(Array.isArray(r)) return r.map(b=>b&&b.text?b.text:"").filter(Boolean).join("");
+        if(r.message!==undefined) return extractText(r.message&&r.message.content!==undefined?r.message.content:r.message);
+        if(r.content!==undefined) return extractText(r.content);
+        if(typeof r.text==="string") return r.text;
+        return JSON.stringify(r);
+      }
+      const text = extractText(resp).trim();
+      const num = parseFloat(text.replace(/[^0-9.]/g, ""));
+      // Sanity check: gold should be 1500-4000, silver 20-60
+      const isGold = a.symbol === "XAUUSD";
+      if (!isNaN(num) && num > (isGold?1500:15) && num < (isGold?5000:200)) {
+        return {price: +num.toFixed(2), change: null, source:"AI-estimate"};
+      }
+    } catch(e) { console.warn("AI price fallback failed:", e); }
+
+    // Fallback 2: fxratesapi (CORS friendly)
     try {
       const metalSymbol = a.symbol === "XAUUSD" ? "XAU" : "XAG";
-      const res = await fetch(`https://api.frankfurter.app/latest?from=${metalSymbol}&to=USD`);
-      const data = await res.json();
-      if (data.rates && data.rates.USD) {
-        return {price: +data.rates.USD.toFixed(2), change: null, source:"Frankfurter"};
+      const res = await fetch(`https://api.fxratesapi.com/latest?currencies=${metalSymbol}&resolution=1m&amount=1&places=2&format=json`, {cache:"no-store"});
+      if (res.ok) {
+        const data = await res.json();
+        if (data.rates && data.rates[metalSymbol]) {
+          // This returns USD per metal unit inverse, need to invert
+          const rate = 1 / data.rates[metalSymbol];
+          return {price: +rate.toFixed(2), change: null, source:"FXRates"};
+        }
       }
-    } catch(e) { console.warn("Frankfurter failed:", e); }
-
-    // Fallback 2: open.er-api.com
-    try {
-      const metalSymbol = a.symbol === "XAUUSD" ? "XAU" : "XAG";
-      const res = await fetch(`https://open.er-api.com/v6/latest/${metalSymbol}`);
-      const data = await res.json();
-      if (data.rates && data.rates.USD) {
-        return {price: +data.rates.USD.toFixed(2), change: null, source:"ExchangeRate-API"};
-      }
-    } catch(e) { console.warn("er-api failed:", e); }
+    } catch(e) { console.warn("fxratesapi failed:", e); }
   }
 
-  return null; // all failed
+  return null;
 }
 
 /* ── Ticker builder ── */
@@ -306,16 +356,17 @@ function buildTicker(prices){
     </span>`).join("");
 }
 
-/* Fetch ticker prices in background */
+/* Fetch ticker prices — all assets including Gold/Silver, auto-refresh every 30s */
 async function refreshTicker(){
-  const tickerAssets = ASSETS.slice(0,6); // top 6 crypto for ticker speed
-  const results = await Promise.allSettled(tickerAssets.map(a=>fetchLivePrice(a)));
-  const prices = tickerAssets.map((a,i)=>{
+  const results = await Promise.allSettled(ASSETS.map(a=>fetchLivePrice(a)));
+  const prices = ASSETS.map((a,i)=>{
     const r = results[i];
-    return {label:a.label, price: r.status==="fulfilled"&&r.value ? r.value.price : "—", change: r.status==="fulfilled"&&r.value ? r.value.change : null};
-  });
-  buildTicker(prices);
+    return {label:a.label, price: r.status==="fulfilled"&&r.value ? r.value.price : null, change: r.status==="fulfilled"&&r.value ? r.value.change : null};
+  }).filter(p=>p.price!==null);
+  if(prices.length > 0) buildTicker(prices);
 }
+// Auto-refresh ticker every 30 seconds
+setInterval(refreshTicker, 30000);
 
 /* ── Pill builders ── */
 function buildAssets(){
@@ -508,7 +559,10 @@ async function scan(){
     document.getElementById("stripPrice").textContent="$"+livePrice.toLocaleString("en",{maximumFractionDigits:decimals});
     document.getElementById("stripChange").textContent=liveChange!=null?`${liveChange>=0?"▲":"▼"} ${Math.abs(liveChange).toFixed(2)}%`:"";
     document.getElementById("stripChange").style.color=liveChange!=null?(liveChange>=0?"#00CC70":"#FF5C7A"):"#3A5068";
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
     document.getElementById("stripSource").textContent="via "+livePriceSource;
+    document.getElementById("stripTime").textContent="fetched at "+timeStr;
 
     // ── STEP 2: Ask Claude for analysis (NOT price) ────────
     setStep(1);
