@@ -472,19 +472,24 @@ async function scan(){
 
   try {
     const prompt=buildPrompt();
-    // puter.ai.chat returns the response text directly
     const resp = await puter.ai.chat(prompt, {model:"claude-sonnet-4-5"});
 
-    // resp may be a string or an object with .message.content
-    let text="";
-    if(typeof resp==="string") text=resp;
-    else if(resp && resp.message && resp.message.content) text=resp.message.content;
-    else if(resp && resp.content) text=resp.content;
-    else text=JSON.stringify(resp);
+    // Recursively extract plain text from any Puter/Anthropic response shape
+    function extractText(r) {
+      if (!r) return "";
+      if (typeof r === "string") return r;
+      if (Array.isArray(r)) return r.map(b => (b && typeof b.text === "string") ? b.text : "").filter(Boolean).join("\n");
+      if (r.message !== undefined) return extractText(r.message && r.message.content !== undefined ? r.message.content : r.message);
+      if (r.content !== undefined) return extractText(r.content);
+      if (typeof r.text === "string") return r.text;
+      return JSON.stringify(r);
+    }
+    const text = extractText(resp);
+    console.log("[scanner] resp shape:", JSON.stringify(resp).slice(0,120));
+    console.log("[scanner] extracted:", text.slice(0,120));
 
-    // Extract JSON
-    const match=text.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error("No JSON in response. Got: "+text.slice(0,150));
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON found. Raw: " + text.slice(0, 200));
     const parsed=JSON.parse(match[0]);
     parsed.time=new Date().toLocaleTimeString();
     renderResult(parsed);
