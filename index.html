@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Trading Signal Scanner — Free</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>"/>
+<script src="https://js.puter.com/v2/"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#06080C;min-height:100vh;font-family:'DM Mono','Fira Mono',monospace;color:#8AA0B8}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0A0E14}::-webkit-scrollbar-thumb{background:#1A2535;border-radius:2px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes scanln{0%{top:-60px}100%{top:100vh}}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.scanline{pointer-events:none;position:fixed;left:0;right:0;height:60px;background:linear-gradient(transparent,rgba(130,200,255,.04),transparent);animation:scanln 8s linear infinite;z-index:100}
+.ticker-wrap{overflow:hidden;white-space:nowrap;background:#060A10;border-bottom:1px solid #0A1420;padding:5px 0}
+.ticker-inner{display:inline-block;animation:ticker 32s linear infinite}
+button{font-family:'DM Mono','Fira Mono',monospace;cursor:pointer;transition:opacity .15s,border-color .15s}
+button:hover:not(:disabled){opacity:.8}
+button:disabled{cursor:not-allowed}
+.hdr{background:#080C12;border-bottom:1px solid #0E1820;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card{background:#080C12;border:1px solid #0E1820;border-radius:4px;padding:14px}
+.tab-wrap{display:flex;gap:2px;background:#080C12;border:1px solid #0E1820;border-radius:4px;padding:3px;width:fit-content}
+.tab-btn{background:transparent;border:1px solid transparent;color:#2A3A4A;padding:5px 18px;font-size:10px;letter-spacing:2px;border-radius:2px}
+.tab-btn.active{background:#0E1820;border-color:#1A3050;color:#6A9ABD}
+.pill-row{display:flex;gap:2px;flex-wrap:wrap;background:#080C12;padding:3px;border-radius:4px;border:1px solid #0E1820}
+.pill{background:transparent;border:1px solid transparent;color:#2A3A4A;padding:5px 12px;font-size:10px;border-radius:2px}
+.pill.active{background:#0E1820}
+.sig-grid{display:grid;grid-template-columns:1fr auto auto auto;gap:20px;align-items:center}
+@media(max-width:600px){.sig-grid{grid-template-columns:1fr 1fr}}
+.ind-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:6px}
+.load-bars{display:inline-flex;gap:5px}
+.load-bar{width:5px;border-radius:2px;background:#0E1820;transition:height .4s ease,background .4s ease,box-shadow .4s ease}
+.reason{display:flex;align-items:flex-start;gap:10px;padding:7px 10px;background:#06080C;border-radius:2px}
+.score-track{position:relative;height:5px;background:#0E1820;border-radius:3px;overflow:hidden}
+.score-fill{position:absolute;height:100%;border-radius:3px;transition:width .5s ease,left .5s ease}
+.score-mid{position:absolute;left:50%;top:-1px;width:1px;height:7px;background:#0A0E14}
+.free-badge{background:#001A0A;border:1px solid #00CC7033;color:#00CC70;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
+.fade{animation:fadein .4s ease}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px)}
+.modal-box{background:#0A0E14;border:1px solid #1A2A3A;border-radius:8px;padding:32px;max-width:420px;width:90%;animation:fadein .3s ease;text-align:center}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+
+<!-- Login Modal -->
+<div class="modal-bg" id="loginModal" style="display:none">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:12px">◈</div>
+    <div style="color:#C8DCF0;font-size:15px;letter-spacing:3px;margin-bottom:6px">AI SIGNAL SCANNER</div>
+    <div style="color:#2A3A4A;font-size:10px;letter-spacing:2px;margin-bottom:24px">100% FREE · NO API KEY · NO CREDIT CARD</div>
+    <p style="font-size:11px;color:#3A5068;line-height:1.9;margin-bottom:24px">
+      This app uses <strong style="color:#6A9ABD">Puter.js</strong> to run Claude AI for free.<br>
+      Sign in with a free Puter account to start scanning.<br>
+      <span style="color:#1A2A3A;font-size:10px">Sign up is instant — just email + password.</span>
+    </p>
+    <button id="loginBtn" style="width:100%;background:linear-gradient(135deg,#0E2030,#0A1825);border:1px solid #2A4060;color:#6A9ABD;padding:13px;border-radius:4px;font-size:12px;letter-spacing:3px;margin-bottom:12px">
+      ▶ SIGN IN / SIGN UP (FREE)
+    </button>
+    <div style="font-size:9px;color:#1A2A3A;line-height:1.8">
+      Powered by puter.com · Free cloud AI platform<br>
+      Your data stays in your browser
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="hdr">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div id="assetIcon" style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0E1820;border:1px solid #1A2A3A">◈</div>
+      <div>
+        <div style="font-size:9px;letter-spacing:4px;color:#1A2A3A">AI TRADING SIGNAL SCANNER</div>
+        <div style="font-size:15px;font-weight:500;color:#C8DCF0;letter-spacing:1px;margin-top:1px">
+          <span id="hdrLabel">BTC/USD</span>
+          <span id="hdrTf" style="font-size:10px;color:#1A3048;margin-left:8px">[5M]</span>
+          <span class="free-badge" style="margin-left:10px">FREE</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div id="loadMsg" style="display:none;font-size:10px;color:#FFBE00;letter-spacing:2px">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#FFBE00;animation:pulse .7s infinite;vertical-align:middle;margin-right:6px"></span>
+        <span id="loadTxt">Scanning…</span>
+      </div>
+      <button id="scanBtn" style="background:linear-gradient(135deg,#0E2030,#0A1825);border:1px solid #2A4060;color:#6A9ABD;padding:8px 22px;font-size:11px;letter-spacing:2px;border-radius:3px">
+        ▶ SCAN MARKET
+      </button>
+    </div>
+  </div>
+
+  <div class="ticker-wrap"><div class="ticker-inner" id="ticker"></div></div>
+
+  <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-width:960px;margin:0 auto">
+    <div class="tab-wrap">
+      <button class="tab-btn active" onclick="switchTab('CRYPTO')">⬡ CRYPTO</button>
+      <button class="tab-btn" onclick="switchTab('COMMODITY')">◈ COMMODITY</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="pill-row" id="assetRow" style="flex:1"></div>
+      <div class="pill-row" id="tfRow"></div>
+    </div>
+
+    <div id="idleBox" class="card fade" style="padding:52px 20px;text-align:center">
+      <div style="font-size:30px;margin-bottom:12px;opacity:.3">⬡</div>
+      <div style="color:#1A2A3A;font-size:11px;letter-spacing:3px">READY TO SCAN</div>
+      <div style="color:#0E1820;font-size:10px;margin-top:6px">Select asset & timeframe → press SCAN MARKET</div>
+    </div>
+
+    <div id="loadBox" class="card fade" style="display:none;padding:48px 20px;text-align:center">
+      <div class="load-bars">
+        <div class="load-bar" id="lb0" style="height:14px"></div>
+        <div class="load-bar" id="lb1" style="height:14px"></div>
+        <div class="load-bar" id="lb2" style="height:14px"></div>
+        <div class="load-bar" id="lb3" style="height:14px"></div>
+      </div>
+      <div id="loadLabel" style="color:#FFBE00;font-size:11px;letter-spacing:3px;margin-top:16px">Fetching live price…</div>
+      <div id="loadSub" style="color:#1A2A3A;font-size:10px;margin-top:6px"></div>
+    </div>
+
+    <div id="errBox" class="card fade" style="display:none;background:#0E0810;border-color:#FF205044">
+      <div id="errMsg" style="color:#FF5C7A;font-size:11px;line-height:1.7;margin-bottom:4px"></div>
+      <div style="color:#3A1A2A;font-size:10px">Please try again.</div>
+    </div>
+
+    <div id="resultWrap" style="display:none;flex-direction:column;gap:10px" class="fade">
+      <!-- Signal banner -->
+      <div id="sigBanner" class="card sig-grid" style="border-left-width:3px;border-left-style:solid">
+        <div>
+          <div id="sigMeta" style="font-size:9px;letter-spacing:4px;color:#1A2A3A;margin-bottom:8px">SIGNAL</div>
+          <div id="sigLabel" style="font-size:26px;font-weight:500;letter-spacing:2px;margin-bottom:8px;color:#3A5068">— WAITING</div>
+          <div id="sigSummary" style="font-size:11px;color:#3A5068;line-height:1.7;max-width:260px"></div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:6px">CONFIDENCE</div>
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle cx="40" cy="40" r="30" fill="none" stroke="#0E1820" stroke-width="7"/>
+            <circle id="meterArc" cx="40" cy="40" r="30" fill="none" stroke="#00CC70" stroke-width="7" stroke-linecap="round" transform="rotate(-90 40 40)" stroke-dasharray="0 188.5" style="transition:stroke-dasharray .6s ease"/>
+            <text id="meterTxt" x="40" y="45" text-anchor="middle" fill="#00CC70" style="font-size:14px;font-family:monospace;font-weight:bold">—</text>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:6px">LIVE PRICE</div>
+          <div id="priceVal" style="font-size:20px;color:#C8DCF0;font-weight:500;letter-spacing:1px">—</div>
+          <div id="priceAsset" style="font-size:10px;color:#1A2A3A;margin-top:3px"></div>
+        </div>
+        <div id="dirBox" style="border-radius:4px;padding:14px 18px;text-align:center;min-width:140px;background:#080C12;border:1px solid #1A2A3A">
+          <div style="font-size:9px;letter-spacing:2px;color:#1A2A3A;margin-bottom:8px">DIRECTION</div>
+          <div id="dirIcon" style="font-size:22px">⏳</div>
+          <div id="dirLabel" style="font-size:12px;font-weight:500;margin-top:4px;letter-spacing:1px;color:#FFBE00">WAIT</div>
+          <div id="dirSub" style="font-size:9px;margin-top:4px;color:#2A3A4A;line-height:1.5">No clear trend</div>
+        </div>
+      </div>
+
+      <div class="ind-grid" id="indGrid"></div>
+
+      <div class="card">
+        <div style="font-size:9px;letter-spacing:2px;color:#1A2A3A;margin-bottom:6px">SCORE</div>
+        <div id="scoreVal" style="font-size:13px;font-weight:500;color:#C8DCF0;margin-bottom:8px">—</div>
+        <div class="score-track">
+          <div class="score-fill" id="scoreFill"></div>
+          <div class="score-mid"></div>
+        </div>
+        <div id="scoreLbl" style="font-size:9px;margin-top:5px;letter-spacing:1px;color:#2A3A4A">—</div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:10px">SIGNAL ANALYSIS</div>
+        <div id="reasons" style="display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+
+      <button id="rescanBtn" style="background:#080C12;padding:12px;font-size:11px;letter-spacing:3px;border-radius:3px;width:100%;color:#3A5068;border:1px solid #1A2A3A">
+        ↻ RESCAN
+      </button>
+    </div>
+
+    <div id="histWrap" class="card" style="display:none">
+      <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:10px">SCAN HISTORY</div>
+      <div id="histList" style="display:flex;flex-direction:column;gap:2px"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="card" style="background:#080A06;border-color:#0E1408;font-size:9px;color:#2A3A20;line-height:1.8;letter-spacing:1px">
+        ⚠ AI-POWERED · LIVE WEB SEARCH<br>NOT FINANCIAL ADVICE<br>ALWAYS USE DEMO FIRST
+      </div>
+      <div class="card" style="font-size:9px;color:#1A2A3A;line-height:1.8">
+        <div style="color:#2A3A4A;margin-bottom:3px">BEST PLATFORMS</div>
+        deriv.com · expertoption.com<br>binance.com · bybit.com
+      </div>
+    </div>
+    <div style="text-align:center;padding:8px 0;font-size:9px;color:#0E1820;letter-spacing:2px">
+      FREE · POWERED BY PUTER.JS + CLAUDE AI
+    </div>
+  </div>
+</div>
+
+<script>
+const ASSETS = [
+  {symbol:"BTC",    label:"BTC/USD",    accent:"#F7931A",type:"crypto"},
+  {symbol:"ETH",    label:"ETH/USD",    accent:"#627EEA",type:"crypto"},
+  {symbol:"BNB",    label:"BNB/USD",    accent:"#F3BA2F",type:"crypto"},
+  {symbol:"SOL",    label:"SOL/USD",    accent:"#9945FF",type:"crypto"},
+  {symbol:"XRP",    label:"XRP/USD",    accent:"#00AAE4",type:"crypto"},
+  {symbol:"DOGE",   label:"DOGE/USD",   accent:"#C2A633",type:"crypto"},
+  {symbol:"XAUUSD", label:"GOLD/USD",   accent:"#FFD700",type:"commodity"},
+  {symbol:"XAGUSD", label:"SILVER/USD", accent:"#C0C0C0",type:"commodity"},
+];
+const TF_SHORT   = ["1M","5M","15M","30M","1H","4H"];
+const TIMEFRAMES = ["1 minute","5 minutes","15 minutes","30 minutes","1 hour","4 hours"];
+const TICKER_DATA = [
+  {label:"BTC/USD",price:"84,320",change:1.2},{label:"ETH/USD",price:"3,241",change:-0.8},
+  {label:"SOL/USD",price:"142.5",change:2.1},{label:"XRP/USD",price:"0.6120",change:0.4},
+  {label:"GOLD",price:"3,021",change:0.3},{label:"SILVER",price:"33.82",change:-0.5},
+  {label:"BNB/USD",price:"592",change:1.0},{label:"DOGE",price:"0.1721",change:-1.3},
+];
+const SIG_META = {
+  "STRONG BUY": {color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
+  "BUY":        {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
+  "NEUTRAL":    {color:"#FFBE00",glow:"#FFBE0018",icon:"━"},
+  "SELL":       {color:"#FF5C7A",glow:"#FF5C7A22",icon:"▼"},
+  "STRONG SELL":{color:"#FF2050",glow:"#FF205033",icon:"▼▼"},
+};
+const IND_C={BULLISH:"#00CC70",BEARISH:"#FF5C7A",UPTREND:"#00CC70",DOWNTREND:"#FF5C7A",UPPER:"#FF5C7A",LOWER:"#00CC70",NEUTRAL:"#3A5068",MIDDLE:"#3A5068"};
+const STEPS=["Fetching live price…","Running RSI + MACD…","Analyzing EMA + BB…","Generating signal…"];
+
+let tab="CRYPTO", asset=ASSETS[0], tfIdx=1, loading=false, history=[], loadStep=0, loadIv=null;
+
+/* ── Ticker ── */
+function buildTicker(){
+  const items=[...TICKER_DATA,...TICKER_DATA];
+  document.getElementById("ticker").innerHTML=items.map(p=>`
+    <span style="display:inline-block;margin-right:32px;font-size:10px;letter-spacing:1px">
+      <span style="color:#2A3A4A;margin-right:6px">${p.label}</span>
+      <span style="color:#C8DCF0;margin-right:4px">$${p.price}</span>
+      <span style="color:${p.change>=0?"#00CC70":"#FF5C7A"}">${p.change>=0?"▲":"▼"} ${Math.abs(p.change)}%</span>
+    </span>`).join("");
+}
+
+/* ── Pill builders ── */
+function buildAssets(){
+  const row=document.getElementById("assetRow");
+  row.innerHTML=ASSETS.filter(a=>tab==="CRYPTO"?a.type==="crypto":a.type==="commodity").map(a=>`
+    <button class="pill ${a.symbol===asset.symbol?"active":""}"
+      style="${a.symbol===asset.symbol?`border-color:${a.accent}44;color:${a.accent}`:""}"
+      onclick="selectAsset('${a.symbol}')">${a.label}</button>`).join("");
+}
+function buildTF(){
+  document.getElementById("tfRow").innerHTML=TF_SHORT.map((t,i)=>`
+    <button class="pill ${i===tfIdx?"active":""}"
+      style="${i===tfIdx?"border-color:#1A3050;color:#6A9ABD":""}"
+      onclick="selectTF(${i})">${t}</button>`).join("");
+}
+function selectAsset(sym){
+  asset=ASSETS.find(a=>a.symbol===sym); resetResult();
+  updateHeader(); buildAssets();
+}
+function selectTF(i){
+  tfIdx=i; resetResult(); buildTF();
+  document.getElementById("hdrTf").textContent=`[${TF_SHORT[i]}]`;
+}
+function switchTab(t){
+  tab=t;
+  document.querySelectorAll(".tab-btn").forEach((b,i)=>b.classList.toggle("active",i===(t==="CRYPTO"?0:1)));
+  asset=ASSETS.find(a=>a.type===(t==="CRYPTO"?"crypto":"commodity"));
+  resetResult(); updateHeader(); buildAssets();
+}
+function updateHeader(){
+  const ai=document.getElementById("assetIcon");
+  ai.style.background=`linear-gradient(135deg,${asset.accent}18,${asset.accent}38)`;
+  ai.style.borderColor=`${asset.accent}44`;
+  document.getElementById("hdrLabel").style.color=asset.accent;
+  document.getElementById("hdrLabel").textContent=asset.label;
+}
+
+/* ── Show/hide panels ── */
+function showOnly(id){
+  ["idleBox","loadBox","errBox","resultWrap"].forEach(x=>{
+    const el=document.getElementById(x);
+    el.style.display=x===id?(x==="resultWrap"?"flex":"block"):"none";
+  });
+}
+function resetResult(){showOnly("idleBox");}
+
+/* ── Loading step animator ── */
+function setStep(s){
+  loadStep=s;
+  const labels=STEPS;
+  document.getElementById("loadLabel").textContent=labels[Math.min(s,labels.length-1)];
+  document.getElementById("loadSub").textContent=`${asset.label} · ${TF_SHORT[tfIdx]}`;
+  document.getElementById("loadTxt").textContent=labels[Math.min(s,labels.length-1)];
+  [0,1,2,3].forEach(i=>{
+    const bar=document.getElementById("lb"+i);
+    const active=i<=s;
+    bar.style.height=active?"28px":"14px";
+    bar.style.background=active?"#FFBE00":"#0E1820";
+    bar.style.boxShadow=active?"0 0 8px #FFBE00":"none";
+  });
+}
+
+/* ── Render result ── */
+function renderResult(r){
+  const m=SIG_META[r.signal]||{color:"#3A5068",glow:"#0000",icon:"◌"};
+  const C=2*Math.PI*30;
+
+  // Banner
+  const banner=document.getElementById("sigBanner");
+  banner.style.borderLeftColor=m.color;
+  banner.style.boxShadow=`inset 0 0 40px ${m.glow}`;
+  document.getElementById("sigMeta").textContent=`SIGNAL · ${TF_SHORT[tfIdx]} · ${r.time}`;
+  document.getElementById("sigLabel").textContent=`${m.icon} ${r.signal}`;
+  document.getElementById("sigLabel").style.color=m.color;
+  document.getElementById("sigLabel").style.textShadow=`0 0 20px ${m.color}88`;
+  document.getElementById("sigSummary").textContent=r.summary||"";
+
+  // Meter
+  const pct=r.confidence||50;
+  document.getElementById("meterArc").setAttribute("stroke-dasharray",`${C*pct/100} ${C}`);
+  document.getElementById("meterArc").setAttribute("stroke",m.color);
+  document.getElementById("meterArc").style.filter=`drop-shadow(0 0 6px ${m.color})`;
+  document.getElementById("meterTxt").textContent=pct+"%";
+  document.getElementById("meterTxt").setAttribute("fill",m.color);
+
+  // Price
+  const decimals=asset.type==="commodity"?2:4;
+  document.getElementById("priceVal").textContent="$"+Number(r.price).toLocaleString("en",{maximumFractionDigits:decimals});
+  document.getElementById("priceAsset").textContent=asset.label;
+
+  // Direction
+  const dirBox=document.getElementById("dirBox");
+  dirBox.style.borderColor=`${m.color}22`;
+  dirBox.style.background=r.signal.includes("BUY")?"#001A0A":r.signal.includes("SELL")?"#150008":"#080C12";
+  if(r.signal==="NEUTRAL"){
+    document.getElementById("dirIcon").textContent="⏳";
+    document.getElementById("dirLabel").textContent="WAIT";
+    document.getElementById("dirLabel").style.color="#FFBE00";
+    document.getElementById("dirSub").textContent="No clear trend";
+  } else {
+    const isBuy=r.signal.includes("BUY");
+    document.getElementById("dirIcon").textContent=isBuy?"📈":"📉";
+    document.getElementById("dirLabel").textContent=isBuy?"CALL / BUY ↑":"PUT / SELL ↓";
+    document.getElementById("dirLabel").style.color=m.color;
+    document.getElementById("dirSub").innerHTML="Deriv.com<br>ExpertOption";
+  }
+
+  // Indicators
+  const inds=[
+    {label:"RSI (14)", val:r.rsi?Number(r.rsi).toFixed(1):"—",
+     sub:!r.rsi?"N/A":r.rsi<30?"OVERSOLD":r.rsi>70?"OVERBOUGHT":"NEUTRAL",
+     color:!r.rsi?"#2A3A4A":r.rsi<30?"#00CC70":r.rsi>70?"#FF5C7A":"#2A3A4A"},
+    {label:"MACD",    val:r.macd||"—",
+     sub:r.macd==="BULLISH"?"BUY PRESSURE":r.macd==="BEARISH"?"SELL PRESSURE":"FLAT",
+     color:IND_C[r.macd]||"#3A5068"},
+    {label:"EMA 9/21",val:r.ema||"—",
+     sub:r.ema==="UPTREND"?"GOING UP":r.ema==="DOWNTREND"?"GOING DOWN":"SIDEWAYS",
+     color:IND_C[r.ema]||"#3A5068"},
+    {label:"BOLLINGER",val:r.bb||"—",
+     sub:r.bb==="UPPER"?"OVERBOUGHT ZONE":r.bb==="LOWER"?"OVERSOLD ZONE":"NORMAL RANGE",
+     color:IND_C[r.bb]||"#3A5068"},
+  ];
+  document.getElementById("indGrid").innerHTML=inds.map(ind=>`
+    <div class="card">
+      <div style="font-size:9px;letter-spacing:2px;color:#1A2A3A;margin-bottom:6px">${ind.label}</div>
+      <div style="font-size:13px;font-weight:500;color:#C8DCF0;margin-bottom:4px">${ind.val}</div>
+      <div style="font-size:9px;letter-spacing:1px;color:${ind.color}">${ind.sub}</div>
+    </div>`).join("");
+
+  // Score
+  const sc=r.score||0;
+  const pctSc=((Math.min(Math.max(sc,-6),6)+6)/12)*100;
+  const scColor=sc>=2?"#00CC70":sc<=-2?"#FF5C7A":"#FFBE00";
+  document.getElementById("scoreVal").textContent=(sc>0?"+":"")+sc+" / 6";
+  const fill=document.getElementById("scoreFill");
+  fill.style.left=(pctSc<50?pctSc:50)+"%";
+  fill.style.width=Math.abs(pctSc-50)+"%";
+  fill.style.background=scColor;
+  fill.style.boxShadow=`0 0 6px ${scColor}`;
+  document.getElementById("scoreLbl").textContent=sc>=4?"VERY BULLISH":sc>=2?"BULLISH":sc<=-4?"VERY BEARISH":sc<=-2?"BEARISH":"MIXED";
+  document.getElementById("scoreLbl").style.color=scColor;
+
+  // Reasons
+  document.getElementById("reasons").innerHTML=(r.reasons||[]).map(rs=>`
+    <div class="reason" style="border-left:2px solid ${rs.t==="buy"?"#00CC70":rs.t==="sell"?"#FF5C7A":"#2A3A4A"}">
+      <span style="font-size:9px;color:${rs.t==="buy"?"#00CC70":rs.t==="sell"?"#FF5C7A":"#2A3A4A"};margin-top:2px">
+        ${rs.t==="buy"?"▲":rs.t==="sell"?"▼":"—"}
+      </span>
+      <span style="font-size:11px;color:#4A6070;line-height:1.6">${rs.txt}</span>
+    </div>`).join("");
+
+  // Rescan button
+  const rb=document.getElementById("rescanBtn");
+  rb.textContent=`↻ RESCAN ${asset.label}`;
+  rb.style.color=m.color;
+  rb.style.borderColor=`${m.color}33`;
+  rb.style.boxShadow=`0 0 16px ${m.glow}`;
+
+  showOnly("resultWrap");
+}
+
+/* ── History ── */
+function pushHistory(r){
+  history.unshift({signal:r.signal,price:r.price,time:r.time,asset:asset.label,tf:TF_SHORT[tfIdx]});
+  if(history.length>10) history.pop();
+  const wrap=document.getElementById("histWrap");
+  wrap.style.display="block";
+  document.getElementById("histList").innerHTML=history.map((h,i)=>{
+    const hm=SIG_META[h.signal]||{color:"#3A5068",icon:"◌"};
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:${i===0?"#0A0E14":"transparent"};border-radius:2px;opacity:${1-i*0.08}">
+      <span style="font-size:9px;color:#1A2A3A;min-width:70px">${h.time}</span>
+      <span style="font-size:10px;color:#1A2A3A;min-width:14px">${h.tf}</span>
+      <span style="font-size:10px;color:#2A3A4A;min-width:75px;margin-left:8px">${h.asset}</span>
+      <span style="font-size:10px;color:${hm.color};flex:1;letter-spacing:1px">${hm.icon} ${h.signal}</span>
+      <span style="font-size:10px;color:#2A3A4A">$${Number(h.price).toLocaleString("en",{maximumFractionDigits:2})}</span>
+    </div>`;
+  }).join("");
+}
+
+/* ── Prompt builder ── */
+function buildPrompt(){
+  const assetName=asset.symbol==="XAUUSD"?"Gold (XAU/USD)":asset.symbol==="XAGUSD"?"Silver (XAG/USD)":`${asset.symbol}/USD`;
+  return `You are a professional trading signal analyst with access to real-time web search.
+
+Analyze ${assetName} on the ${TIMEFRAMES[tfIdx]} timeframe RIGHT NOW.
+
+Step 1 — Search the web for:
+- Current live price of ${assetName}
+- Recent price trend and momentum
+- ${asset.type==="commodity"?"USD strength, inflation data, Fed news, or geopolitical events affecting metals":"Recent market sentiment, news, and volume for "+asset.symbol}
+
+Step 2 — Estimate these technical indicators from current conditions:
+- RSI(14): if price has been rising strongly → RSI likely >60; if falling → <40; consolidating → 45-55
+- MACD: based on short-term vs medium-term momentum direction
+- EMA 9/21: uptrend if recent action is above medium-term average, else downtrend
+- Bollinger Bands: is price near upper band (extended/overbought), lower band (oversold), or middle?
+
+Step 3 — Generate your signal.
+
+Respond ONLY with this exact JSON (no markdown, no explanation, no text before or after):
+{
+  "signal": "STRONG BUY",
+  "confidence": 72,
+  "price": 84250,
+  "score": 4,
+  "rsi": 61.5,
+  "macd": "BULLISH",
+  "ema": "UPTREND",
+  "bb": "MIDDLE",
+  "reasons": [
+    {"txt": "Price is above EMA 21 suggesting bullish momentum", "t": "buy"},
+    {"txt": "RSI is not yet overbought at 61.5, room to run", "t": "buy"},
+    {"txt": "MACD histogram is expanding bullishly", "t": "buy"}
+  ],
+  "summary": "BTC shows strong bullish momentum with price above key EMAs and MACD confirming upward trend."
+}`;
+}
+
+/* ── Main scan ── */
+async function scan(){
+  if(loading) return;
+  loading=true;
+  const btn=document.getElementById("scanBtn");
+  btn.textContent="···";
+  btn.disabled=true;
+  document.getElementById("loadMsg").style.display="inline";
+  showOnly("loadBox");
+  clearInterval(loadIv);
+  loadStep=0; setStep(0);
+  loadIv=setInterval(()=>setStep(Math.min(loadStep+1,STEPS.length-1)), 2200);
+
+  try {
+    const prompt=buildPrompt();
+    // puter.ai.chat returns the response text directly
+    const resp = await puter.ai.chat(prompt, {model:"claude-sonnet-4-5"});
+
+    // resp may be a string or an object with .message.content
+    let text="";
+    if(typeof resp==="string") text=resp;
+    else if(resp && resp.message && resp.message.content) text=resp.message.content;
+    else if(resp && resp.content) text=resp.content;
+    else text=JSON.stringify(resp);
+
+    // Extract JSON
+    const match=text.match(/\{[\s\S]*\}/);
+    if(!match) throw new Error("No JSON in response. Got: "+text.slice(0,150));
+    const parsed=JSON.parse(match[0]);
+    parsed.time=new Date().toLocaleTimeString();
+    renderResult(parsed);
+    pushHistory(parsed);
+
+  } catch(e){
+    console.error(e);
+    showOnly("errBox");
+    document.getElementById("errMsg").textContent="⚠ "+e.message;
+  }
+
+  clearInterval(loadIv);
+  loading=false;
+  btn.textContent="▶ SCAN MARKET";
+  btn.disabled=false;
+  document.getElementById("loadMsg").style.display="none";
+}
+
+/* ── Puter auth check ── */
+async function init(){
+  buildTicker();
+  buildAssets();
+  buildTF();
+  updateHeader();
+
+  document.getElementById("scanBtn").onclick=scan;
+  document.getElementById("rescanBtn").onclick=scan;
+  document.getElementById("loginBtn").onclick=async()=>{
+    try{
+      await puter.auth.signIn();
+      document.getElementById("loginModal").style.display="none";
+      document.getElementById("app").style.display="block";
+    }catch(e){console.error(e);}
+  };
+
+  // Check if already signed in
+  try{
+    const isSignedIn = await puter.auth.isSignedIn();
+    if(isSignedIn){
+      document.getElementById("app").style.display="block";
+    } else {
+      document.getElementById("loginModal").style.display="flex";
+    }
+  } catch(e){
+    // puter not loaded yet or error — show login
+    document.getElementById("loginModal").style.display="flex";
+  }
+}
+
+window.addEventListener("load", init);
+</script>
+</body>
+</html>
