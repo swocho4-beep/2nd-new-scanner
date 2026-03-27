@@ -211,12 +211,37 @@ const ASSETS = [
 ];
 const TF_SHORT   = ["1M","5M","15M","30M","1H","4H"];
 const TIMEFRAMES = ["1 minute","5 minutes","15 minutes","30 minutes","1 hour","4 hours"];
-const TICKER_DATA = [
-  {label:"BTC/USD",price:"84,320",change:1.2},{label:"ETH/USD",price:"3,241",change:-0.8},
-  {label:"SOL/USD",price:"142.5",change:2.1},{label:"XRP/USD",price:"0.6120",change:0.4},
-  {label:"GOLD",price:"3,021",change:0.3},{label:"SILVER",price:"33.82",change:-0.5},
-  {label:"BNB/USD",price:"592",change:1.0},{label:"DOGE",price:"0.1721",change:-1.3},
+// Ticker data — fetched live from CoinGecko (no key needed)
+let TICKER_DATA = [
+  {label:"BTC/USD",price:"…",change:0},{label:"ETH/USD",price:"…",change:0},
+  {label:"SOL/USD",price:"…",change:0},{label:"XRP/USD",price:"…",change:0},
+  {label:"BNB/USD",price:"…",change:0},{label:"DOGE",price:"…",change:0},
+  {label:"GOLD",price:"…",change:0},{label:"SILVER",price:"…",change:0},
 ];
+
+async function fetchLivePrices() {
+  try {
+    // CoinGecko free API — no key needed
+    const url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple,binancecoin,dogecoin&vs_currencies=usd&include_24hr_change=true";
+    const res = await fetch(url);
+    const d = await res.json();
+    const fmt = (n) => n >= 1000 ? Number(n).toLocaleString("en",{maximumFractionDigits:0})
+                      : n >= 1    ? Number(n).toFixed(4).replace(/\.?0+$/,"")
+                      : Number(n).toFixed(5);
+    const chg = (c) => c ? Math.round(c*100)/100 : 0;
+    TICKER_DATA = [
+      {label:"BTC/USD", price:fmt(d.bitcoin?.usd||0),      change:chg(d.bitcoin?.usd_24h_change)},
+      {label:"ETH/USD", price:fmt(d.ethereum?.usd||0),     change:chg(d.ethereum?.usd_24h_change)},
+      {label:"SOL/USD", price:fmt(d.solana?.usd||0),       change:chg(d.solana?.usd_24h_change)},
+      {label:"XRP/USD", price:fmt(d.ripple?.usd||0),       change:chg(d.ripple?.usd_24h_change)},
+      {label:"BNB/USD", price:fmt(d.binancecoin?.usd||0),  change:chg(d.binancecoin?.usd_24h_change)},
+      {label:"DOGE",    price:fmt(d.dogecoin?.usd||0),     change:chg(d.dogecoin?.usd_24h_change)},
+      {label:"GOLD",    price:"…", change:0},
+      {label:"SILVER",  price:"…", change:0},
+    ];
+    buildTicker();
+  } catch(e) { console.warn("Ticker fetch failed:", e.message); }
+}
 const SIG_META = {
   "STRONG BUY": {color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
   "BUY":        {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
@@ -421,40 +446,33 @@ function pushHistory(r){
 /* ── Prompt builder ── */
 function buildPrompt(){
   const assetName=asset.symbol==="XAUUSD"?"Gold (XAU/USD)":asset.symbol==="XAGUSD"?"Silver (XAG/USD)":`${asset.symbol}/USD`;
-  return `You are a professional trading signal analyst with access to real-time web search.
+  const searchTerms=asset.type==="commodity"
+    ? `"${assetName} spot price now" AND "USD" to get the exact live market price`
+    : `"${asset.symbol} price USD" live to get the exact current trading price`;
+  return `You are a live trading signal analyst. Today is ${new Date().toUTCString()}.
 
-Analyze ${assetName} on the ${TIMEFRAMES[tfIdx]} timeframe RIGHT NOW.
+TASK: Analyze ${assetName} on the ${TIMEFRAMES[tfIdx]} timeframe.
 
-Step 1 — Search the web for:
-- Current live price of ${assetName}
-- Recent price trend and momentum
-- ${asset.type==="commodity"?"USD strength, inflation data, Fed news, or geopolitical events affecting metals":"Recent market sentiment, news, and volume for "+asset.symbol}
+STEP 1 — YOU MUST SEARCH THE WEB FIRST.
+Search for: ${searchTerms}
+Also search for: "${asset.symbol} 24h change trend ${new Date().getFullYear()}"
+${asset.type==="commodity"
+  ? `Also search: "gold silver market today USD DXY" for macro context`
+  : `Also search: "${asset.symbol} market sentiment news today"`}
 
-Step 2 — Estimate these technical indicators from current conditions:
-- RSI(14): if price has been rising strongly → RSI likely >60; if falling → <40; consolidating → 45-55
-- MACD: based on short-term vs medium-term momentum direction
-- EMA 9/21: uptrend if recent action is above medium-term average, else downtrend
-- Bollinger Bands: is price near upper band (extended/overbought), lower band (oversold), or middle?
+STEP 2 — After your search, use ONLY the prices and data you just found.
+NEVER use your training data for the price. The price in your JSON MUST match what major exchanges show RIGHT NOW (Binance, CoinGecko, Kitco, etc).
 
-Step 3 — Generate your signal.
+STEP 3 — Estimate indicators based on the LIVE data you found:
+- RSI(14): rising fast → 65-75, falling fast → 25-35, sideways → 45-55
+- MACD: positive momentum → BULLISH, negative → BEARISH, flat → NEUTRAL
+- EMA 9 vs 21: price trending up recently → UPTREND, down → DOWNTREND
+- Bollinger Bands: price at recent highs → UPPER, lows → LOWER, middle → MIDDLE
 
-Respond ONLY with this exact JSON (no markdown, no explanation, no text before or after):
-{
-  "signal": "STRONG BUY",
-  "confidence": 72,
-  "price": 84250,
-  "score": 4,
-  "rsi": 61.5,
-  "macd": "BULLISH",
-  "ema": "UPTREND",
-  "bb": "MIDDLE",
-  "reasons": [
-    {"txt": "Price is above EMA 21 suggesting bullish momentum", "t": "buy"},
-    {"txt": "RSI is not yet overbought at 61.5, room to run", "t": "buy"},
-    {"txt": "MACD histogram is expanding bullishly", "t": "buy"}
-  ],
-  "summary": "BTC shows strong bullish momentum with price above key EMAs and MACD confirming upward trend."
-}`;
+STEP 4 — Output ONLY this JSON, nothing else, no markdown fences:
+{"signal":"BUY","confidence":65,"price":REPLACE_WITH_REAL_LIVE_PRICE,"score":3,"rsi":58.0,"macd":"BULLISH","ema":"UPTREND","bb":"MIDDLE","reasons":[{"txt":"replace with real reason based on live data","t":"buy"}],"summary":"Replace with one sentence based on live price and conditions."}
+
+IMPORTANT: The "price" field must be the EXACT number you found via web search. Example: if BTC is trading at 83,450 on Binance right now, use 83450. If Gold is at 3,018.50, use 3018.50. No rounding to round numbers. No training data prices.`;
 }
 
 /* ── Main scan ── */
@@ -511,6 +529,7 @@ async function scan(){
 /* ── Puter auth check ── */
 async function init(){
   buildTicker();
+  fetchLivePrices();
   buildAssets();
   buildTF();
   updateHeader();
