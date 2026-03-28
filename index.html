@@ -292,6 +292,16 @@ const saveKey=()=>{
   refreshTicker();
 };
 const clearKey=()=>{localStorage.removeItem(KEY_STORE);location.reload();};
+const saveORKey=()=>{
+  const inp=document.getElementById("orKeyInput");
+  if(!inp) return;
+  const k=inp.value.trim();
+  if(!k){return;}
+  localStorage.setItem(OR_STORE,k);
+  document.getElementById("errCountdown").style.display="none";
+  document.getElementById("errMsg").innerHTML="✓ OpenRouter key saved! Retrying…";
+  setTimeout(scan,800);
+};
 const showKeyErr=m=>{const e=document.getElementById("keyErr");e.textContent=m;e.style.display="block"};
 const toggleShow=()=>{
   const i=document.getElementById("keyInput");
@@ -423,78 +433,130 @@ function setStep(s){
   [0,1,2,3].forEach(i=>{const b=document.getElementById("lb"+i);b.style.height=i<=s?"28px":"14px";b.style.background=i<=s?"#FFBE00":"#0E1820";b.style.boxShadow=i<=s?"0 0 8px #FFBE00":"none";});
 }
 
-/* ── Gemini AI call ── */
-let lastGeminiCall = 0;
+/* ══════════════════════════════════════════════════
+   AI ENGINE — Gemini primary + OpenRouter backup
+   OpenRouter gives free access to many models
+   with no daily quota limits on free tier
+══════════════════════════════════════════════════ */
+let lastAICall = 0;
+const OR_STORE = "openrouter_api_key_v1";
+const getORKey = () => localStorage.getItem(OR_STORE) || "";
 
-// Visible countdown helper shown in the loading box
-async function waitWithCountdown(seconds, prefix="Cooling down") {
+function setLoadMsg(txt) {
+  const a = document.getElementById("loadTxt");
+  const b = document.getElementById("loadLabel");
+  if (a) a.textContent = txt;
+  if (b) b.textContent = txt;
+}
+
+async function countdown(seconds, prefix) {
   for (let s = seconds; s > 0; s--) {
-    document.getElementById("loadTxt").textContent = `${prefix} — ${s}s…`;
-    document.getElementById("loadLabel").textContent = `${prefix} — ${s}s…`;
+    setLoadMsg(`${prefix} — ${s}s…`);
     await new Promise(r => setTimeout(r, 1000));
   }
 }
 
-async function callGemini(prompt) {
+/* ── Try Gemini ── */
+async function tryGemini(prompt) {
   const key = getKey();
-  if (!key) throw new Error("No API key — click ⚙ to enter your Gemini key.");
-
-  // Enforce 6s minimum gap between calls to stay under 15 RPM
-  const gap = Date.now() - lastGeminiCall;
-  if (gap < 6000 && lastGeminiCall > 0) {
-    await waitWithCountdown(Math.ceil((6000 - gap) / 1000), "Spacing requests");
-  }
-
-  // Models to try in order — lite has highest free RPM
-  const models = [
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash-8b",
-    "gemini-1.5-flash-latest",
-  ];
-  const body = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
-  };
-
-  for (let mi = 0; mi < models.length; mi++) {
-    const model = models[mi];
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        if (attempt > 0) {
-          await waitWithCountdown(12, `Rate limited (${model}) — retry`);
-        }
-        lastGeminiCall = Date.now();
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" }
-        );
-        if (res.status === 429) {
-          console.warn(`429 on ${model} attempt ${attempt + 1}`);
-          if (attempt === 1) break; // next model
-          continue;
-        }
-        if (res.status === 403 || res.status === 401) {
-          const e = await res.json();
-          throw new Error("Invalid API key — click ⚙ to re-enter. (" + (e?.error?.message || res.status) + ")");
-        }
-        if (res.status === 400) {
-          const e = await res.json();
-          throw new Error("Gemini error: " + (e?.error?.message || "Bad request"));
-        }
-        if (!res.ok) { console.warn(`HTTP ${res.status} on ${model}`); break; }
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        if (text) { lastGeminiCall = Date.now(); return text; }
-        throw new Error("Empty response from Gemini");
-      } catch (e) {
-        if (e.message.includes("Invalid API key") || e.message.includes("Gemini error:")) throw e;
-        if (mi === models.length - 1 && attempt === 1) throw e;
-        console.warn(`Gemini ${model} attempt ${attempt + 1}:`, e.message);
-      }
+  if (!key) return null;
+  const models = ["gemini-2.0-flash-lite", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
+  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 800 } };
+  for (const model of models) {
+    try {
+      setLoadMsg(`Analyzing with ${model}…`);
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" }
+      );
+      if (res.status === 429 || res.status === 503) { console.warn(`${model} rate limited`); continue; }
+      if (res.status === 403 || res.status === 401) throw new Error("INVALID_KEY");
+      if (!res.ok) continue;
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) return text;
+    } catch (e) {
+      if (e.message === "INVALID_KEY") throw new Error("Invalid Gemini API key — click ⚙ to update.");
+      console.warn(`Gemini ${model} failed:`, e.message);
     }
   }
-  throw new Error("All Gemini models rate-limited. Wait 1 minute then try again.");
+  return null; // all models failed
 }
+
+/* ── Try OpenRouter (free backup) ── */
+async function tryOpenRouter(prompt) {
+  const key = getORKey();
+  if (!key) return null;
+  // Free models on OpenRouter
+  const models = [
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "google/gemma-2-9b-it:free",
+  ];
+  for (const model of models) {
+    try {
+      setLoadMsg(`Backup AI: ${model.split("/")[1].split(":")[0]}…`);
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${key}`,
+          "HTTP-Referer": window.location.href,
+          "X-Title": "AI Trading Scanner",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 800,
+          temperature: 0.3,
+        }),
+        cache: "no-store",
+      });
+      if (res.status === 429) { console.warn(`OR ${model} rate limited`); continue; }
+      if (!res.ok) { console.warn(`OR ${model} HTTP ${res.status}`); continue; }
+      const data = await res.json();
+      const text = data?.choices?.[0]?.message?.content || "";
+      if (text) return text;
+    } catch (e) { console.warn(`OR ${model} failed:`, e.message); }
+  }
+  return null;
+}
+
+/* ── Main AI caller — tries both engines ── */
+async function callAI(prompt) {
+  // Enforce minimum gap
+  const gap = Date.now() - lastAICall;
+  if (gap < 4000 && lastAICall > 0) {
+    await countdown(Math.ceil((4000 - gap) / 1000), "Spacing calls");
+  }
+
+  lastAICall = Date.now();
+
+  // 1. Try Gemini first
+  setLoadMsg("Analyzing with Gemini AI…");
+  const geminiResult = await tryGemini(prompt);
+  if (geminiResult) return geminiResult;
+
+  // 2. Gemini failed — try OpenRouter backup
+  const orKey = getORKey();
+  if (orKey) {
+    setLoadMsg("Gemini rate limited — trying backup AI…");
+    const orResult = await tryOpenRouter(prompt);
+    if (orResult) return orResult;
+  }
+
+  // 3. Both failed — ask for OpenRouter key if not set
+  if (!orKey) {
+    throw new Error(
+      "NEEDS_OR_KEY"
+    );
+  }
+
+  throw new Error("All AI engines rate-limited. Wait 60 seconds and try again.");
+}
+
+// Keep callGemini as alias for compatibility
+async function callGemini(prompt) { return callAI(prompt); }
 
 /* ── Render ── */
 function renderResult(r,realPrice){
@@ -665,31 +727,52 @@ Respond ONLY with raw JSON (no markdown, no backticks):
     showOnly("errBox");
     const msg = e.message||"Unknown error";
     // Friendly messages for common errors
-    const isRateLimit = msg.includes("rate limit")||msg.includes("429")||msg.includes("Rate limited");
+    const isRateLimit = msg.includes("rate limit")||msg.includes("429")||msg.includes("Rate limited")||msg.includes("rate-limited");
+    const needsORKey  = msg.includes("NEEDS_OR_KEY");
+
+    if (needsORKey) {
+      // Show OpenRouter key setup inline
+      document.getElementById("errMsg").innerHTML =
+        `⏳ <strong style="color:#FFBE00">Gemini daily limit reached.</strong><br>
+        Add a free <strong style="color:#C8DCF0">OpenRouter</strong> key as backup — it's free forever with no daily limits on basic models.<br><br>
+        <span style="color:#3A5068;font-size:9px">1. Go to <a href="https://openrouter.ai" target="_blank" style="color:#6AAAFF">openrouter.ai</a> → Sign up free<br>
+        2. Go to Keys → Create Key (free)<br>
+        3. Paste below and click Save</span>`;
+      const cd = document.getElementById("errCountdown");
+      cd.style.display = "block";
+      cd.innerHTML = `
+        <div style="margin-top:10px">
+          <div style="font-size:9px;color:#2A3A4A;letter-spacing:2px;margin-bottom:6px">OPENROUTER API KEY (FREE BACKUP)</div>
+          <div style="display:flex;gap:6px">
+            <input type="password" id="orKeyInput" placeholder="sk-or-..." style="flex:1;background:#06080C;border:1px solid #1A2A3A;color:#C8DCF0;padding:8px 10px;border-radius:3px;font-family:monospace;font-size:11px;outline:none"/>
+            <button onclick="saveORKey()" style="background:#0E2030;border:1px solid #2A4060;color:#6AAAFF;padding:8px 14px;border-radius:3px;font-size:10px;letter-spacing:1px">SAVE</button>
+          </div>
+          <div style="font-size:9px;color:#1A2A3A;margin-top:6px">Or wait until midnight for Gemini quota to reset.</div>
+        </div>`;
+      return;
+    }
+
     const friendly = isRateLimit
-      ? "⏳ Rate limit hit — Gemini free tier allows 15 requests/minute."
-      : msg.includes("Invalid API key")||msg.includes("403")
-      ? "🔑 Invalid API key. Click ⚙ and re-enter your key from aistudio.google.com"
+      ? "⏳ All AI models rate-limited. Wait 60 seconds — auto-retrying…"
+      : msg.includes("Invalid")||msg.includes("403")
+      ? "🔑 Invalid API key. Click ⚙ and re-enter from aistudio.google.com"
       : "⚠ "+msg;
     document.getElementById("errMsg").innerHTML = friendly;
 
-    // Auto-retry countdown for rate limit errors
     if (isRateLimit) {
       const cd = document.getElementById("errCountdown");
       const secsEl = document.getElementById("errSecs");
       const barEl = document.getElementById("errBar");
+      cd.innerHTML = `<div style="display:flex;justify-content:space-between;font-size:9px;color:#2A3A4A;margin-bottom:4px;letter-spacing:1px"><span>AUTO-RETRY IN</span><span id="errSecs">62</span></div><div style="background:#0E1820;border-radius:3px;height:3px"><div id="errBar" style="height:100%;background:#FF5C7A;width:100%;transition:width 1s linear;border-radius:3px"></div></div>`;
       cd.style.display = "block";
       let secs = 62;
-      barEl.style.width = "100%";
       const iv = setInterval(() => {
         secs--;
-        secsEl.textContent = secs;
-        barEl.style.width = (secs / 62 * 100) + "%";
-        if (secs <= 0) {
-          clearInterval(iv);
-          cd.style.display = "none";
-          scan(); // auto-retry
-        }
+        const se = document.getElementById("errSecs");
+        const be = document.getElementById("errBar");
+        if(se) se.textContent = secs;
+        if(be) be.style.width = (secs/62*100)+"%";
+        if (secs <= 0) { clearInterval(iv); cd.style.display="none"; scan(); }
       }, 1000);
     }
   }
