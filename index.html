@@ -162,8 +162,19 @@ input:focus{border-color:#2A4060}
     </div>
 
     <div id="errBox" class="card fade" style="display:none;background:#0E0810;border-color:#FF205044">
-      <div id="errMsg" style="color:#FF5C7A;font-size:11px;line-height:1.7;margin-bottom:4px"></div>
-      <div style="color:#3A1A2A;font-size:10px">Please try again.</div>
+      <div id="errMsg" style="color:#FF5C7A;font-size:11px;line-height:1.7;margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="color:#3A1A2A;font-size:10px;flex:1">Click retry or wait 60s.</div>
+        <button onclick="scan()" style="background:#0E1820;border:1px solid #FF205044;color:#FF5C7A;padding:6px 14px;font-size:10px;border-radius:3px;letter-spacing:1px">↻ RETRY</button>
+      </div>
+      <div id="errCountdown" style="display:none;margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#2A3A4A;margin-bottom:4px;letter-spacing:1px">
+          <span>AUTO-RETRY IN</span><span id="errSecs">60</span>
+        </div>
+        <div style="background:#0E1820;border-radius:3px;height:3px">
+          <div id="errBar" style="height:100%;background:#FF5C7A;width:100%;transition:width 1s linear;border-radius:3px"></div>
+        </div>
+      </div>
     </div>
 
     <div id="resultWrap" style="display:none;flex-direction:column;gap:10px" class="fade">
@@ -312,34 +323,43 @@ async function fetchLivePrice(a){
     }catch(e){}
   }
   if(a.type==="commodity"){
-    // 1. Bybit linear — XAU/USDT and XAG/USDT exist on Bybit
+    const isGold=a.symbol==="XAUUSD";
+    const ts=Date.now();
+
+    // 1. Bybit spot — XAU/USDT and XAG/USDT (CORS supported)
     try{
-      const sym=a.symbol==="XAUUSD"?"XAUUSDT":"XAGUSDT";
-      const res=await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const item=d?.result?.list?.[0];if(item&&item.lastPrice)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt)*100,source:"Bybit"};}
-    }catch(e){}
-    // 2. Try a CORS-friendly metals proxy
+      const sym=isGold?"XAUUSDT":"XAGUSDT";
+      const res=await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}&_=${ts}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const item=d?.result?.list?.[0];if(item&&item.lastPrice&&parseFloat(item.lastPrice)>0)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt||0)*100,source:"Bybit"};}
+    }catch(e){console.warn("Bybit commodity failed",e);}
+
+    // 2. Bybit inverse perpetual (different endpoint)
     try{
-      const sym=a.symbol==="XAUUSD"?"XAU":"XAG";
-      const res=await fetch(`https://api.metals.dev/v1/latest?api_key=demo&currency=USD&unit=toz`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const p=d?.metals?.[sym.toLowerCase()];if(p)return{price:+p.toFixed(2),change:null,source:"metals.dev"};}
+      const sym=isGold?"XAUUSD":"XAGUSD";
+      const res=await fetch(`https://api.bybit.com/v5/market/tickers?category=inverse&symbol=${sym}&_=${ts}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const item=d?.result?.list?.[0];if(item&&item.lastPrice&&parseFloat(item.lastPrice)>0)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt||0)*100,source:"Bybit"};}
     }catch(e){}
-    // 3. GoldAPI demo
+
+    // 3. OKX — supports gold/silver spot with CORS
     try{
-      const sym=a.symbol==="XAUUSD"?"XAU":"XAG";
-      const res=await fetch(`https://www.goldapi.io/api/${sym}/USD`,{cache:"no-store",headers:{"x-access-token":"goldapi-2uxdlpvlua4ioxj-io"}});
-      if(res.ok){const d=await res.json();if(d.price)return{price:+d.price.toFixed(2),change:d.ch_percent||null,source:"GoldAPI"};}
-    }catch(e){}
-    // 4. Gemini AI fallback — ask AI directly with strict number-only response
+      const sym=isGold?"XAU-USDT":"XAG-USDT";
+      const res=await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${sym}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const item=d?.data?.[0];if(item&&item.last&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"OKX"};}
+    }catch(e){console.warn("OKX failed",e);}
+
+    // 4. Gate.io spot
     try{
-      const key=getKey();
-      if(key){
-        const metalName=a.symbol==="XAUUSD"?"gold (XAU) spot price per troy ounce in USD":"silver (XAG) spot price per troy ounce in USD";
-        const body={contents:[{parts:[{text:`What is the current ${metalName}? Reply with ONLY the number. No symbols, no text, no explanation. Just the number like: 3021.50`}]}]};
-        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-        if(res.ok){const d=await res.json();const txt=(d?.candidates?.[0]?.content?.parts?.[0]?.text||"").trim();const num=parseFloat(txt.replace(/[^0-9.]/g,""));const isGold=a.symbol==="XAUUSD";if(!isNaN(num)&&num>(isGold?1500:15)&&num<(isGold?5000:200))return{price:+num.toFixed(2),change:null,source:"Gemini-est"};}
-      }
-    }catch(e){}
+      const sym=isGold?"XAU_USDT":"XAG_USDT";
+      const res=await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${sym}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const item=Array.isArray(d)?d[0]:d;if(item&&item.last&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"Gate.io"};}
+    }catch(e){console.warn("Gate.io failed",e);}
+
+    // 5. CoinGecko for gold/silver (they have it)
+    try{
+      const cgId=isGold?"gold":"silver";
+      const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});
+      if(res.ok){const d=await res.json();const p=d[cgId];if(p&&p.usd&&p.usd>(isGold?1000:10))return{price:+p.usd.toFixed(2),change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}
+    }catch(e){console.warn("CoinGecko metals failed",e);}
   }
   return null;
 }
@@ -355,11 +375,14 @@ function buildTicker(prices){
     </span>`).join("");
 }
 async function refreshTicker(){
-  const results=await Promise.allSettled(ASSETS.map(a=>fetchLivePrice(a)));
-  const prices=ASSETS.map((a,i)=>{const r=results[i];return{label:a.label,price:r.status==="fulfilled"&&r.value?r.value.price:null,change:r.status==="fulfilled"&&r.value?r.value.change:null};}).filter(p=>p.price!==null);
+  // Only fetch crypto in ticker — no Gemini calls here at all
+  const cryptoAssets=ASSETS.filter(a=>a.type==="crypto");
+  const results=await Promise.allSettled(cryptoAssets.map(a=>fetchLivePrice(a)));
+  const prices=cryptoAssets.map((a,i)=>{const r=results[i];return{label:a.label,price:r.status==="fulfilled"&&r.value?r.value.price:null,change:r.status==="fulfilled"&&r.value?r.value.change:null};}).filter(p=>p.price!==null);
   if(prices.length>0)buildTicker(prices);
 }
-setInterval(refreshTicker,30000);
+// Refresh every 60s (not 30s) to avoid hammering APIs
+setInterval(refreshTicker,60000);
 
 /* ── UI helpers ── */
 function buildAssets(){
@@ -400,45 +423,77 @@ function setStep(s){
   [0,1,2,3].forEach(i=>{const b=document.getElementById("lb"+i);b.style.height=i<=s?"28px":"14px";b.style.background=i<=s?"#FFBE00":"#0E1820";b.style.boxShadow=i<=s?"0 0 8px #FFBE00":"none";});
 }
 
-/* ── Gemini AI call with retry + model fallback ── */
-async function callGemini(prompt){
-  const key=getKey();
-  // Try models in order — flash-lite is highest free RPM
-  const models=["gemini-1.5-flash-latest","gemini-2.0-flash","gemini-1.5-flash-8b"];
-  const body={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:1024}};
+/* ── Gemini AI call ── */
+let lastGeminiCall = 0;
 
-  for(let m=0; m<models.length; m++){
-    const model=models[m];
-    for(let attempt=0; attempt<3; attempt++){
-      try{
-        if(attempt>0){
-          // Exponential backoff: 5s, 15s
-          const wait=(attempt===1?5000:15000);
-          document.getElementById("loadTxt").textContent=`Rate limited — retrying in ${wait/1000}s…`;
-          await new Promise(r=>setTimeout(r,wait));
+// Visible countdown helper shown in the loading box
+async function waitWithCountdown(seconds, prefix="Cooling down") {
+  for (let s = seconds; s > 0; s--) {
+    document.getElementById("loadTxt").textContent = `${prefix} — ${s}s…`;
+    document.getElementById("loadLabel").textContent = `${prefix} — ${s}s…`;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+}
+
+async function callGemini(prompt) {
+  const key = getKey();
+  if (!key) throw new Error("No API key — click ⚙ to enter your Gemini key.");
+
+  // Enforce 6s minimum gap between calls to stay under 15 RPM
+  const gap = Date.now() - lastGeminiCall;
+  if (gap < 6000 && lastGeminiCall > 0) {
+    await waitWithCountdown(Math.ceil((6000 - gap) / 1000), "Spacing requests");
+  }
+
+  // Models to try in order — lite has highest free RPM
+  const models = [
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-flash-latest",
+  ];
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
+  };
+
+  for (let mi = 0; mi < models.length; mi++) {
+    const model = models[mi];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) {
+          await waitWithCountdown(12, `Rate limited (${model}) — retry`);
         }
-        const res=await fetch(
+        lastGeminiCall = Date.now();
+        const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-          {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"}
+          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" }
         );
-        if(res.status===429){
-          console.warn(`429 on ${model} attempt ${attempt+1}`);
-          if(attempt===2&&m<models.length-1) break; // try next model
-          continue; // retry same model
+        if (res.status === 429) {
+          console.warn(`429 on ${model} attempt ${attempt + 1}`);
+          if (attempt === 1) break; // next model
+          continue;
         }
-        if(res.status===403){throw new Error("Invalid API key — click ⚙ to update it.");}
-        if(res.status===400){const e=await res.json();throw new Error("Gemini: "+(e?.error?.message||"Bad request"));}
-        if(!res.ok){console.warn(`${res.status} on ${model}`);break;}
-        const data=await res.json();
-        const text=data?.candidates?.[0]?.content?.parts?.[0]?.text||"";
-        if(text) return text;
-      }catch(e){
-        if(e.message.includes("Invalid API key")||e.message.includes("Gemini:")) throw e;
-        console.warn(e);
+        if (res.status === 403 || res.status === 401) {
+          const e = await res.json();
+          throw new Error("Invalid API key — click ⚙ to re-enter. (" + (e?.error?.message || res.status) + ")");
+        }
+        if (res.status === 400) {
+          const e = await res.json();
+          throw new Error("Gemini error: " + (e?.error?.message || "Bad request"));
+        }
+        if (!res.ok) { console.warn(`HTTP ${res.status} on ${model}`); break; }
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (text) { lastGeminiCall = Date.now(); return text; }
+        throw new Error("Empty response from Gemini");
+      } catch (e) {
+        if (e.message.includes("Invalid API key") || e.message.includes("Gemini error:")) throw e;
+        if (mi === models.length - 1 && attempt === 1) throw e;
+        console.warn(`Gemini ${model} attempt ${attempt + 1}:`, e.message);
       }
     }
   }
-  throw new Error("Gemini rate limit exceeded. Wait 1 minute and try again, or check your API key at aistudio.google.com");
+  throw new Error("All Gemini models rate-limited. Wait 1 minute then try again.");
 }
 
 /* ── Render ── */
@@ -610,12 +665,33 @@ Respond ONLY with raw JSON (no markdown, no backticks):
     showOnly("errBox");
     const msg = e.message||"Unknown error";
     // Friendly messages for common errors
-    const friendly = msg.includes("rate limit")||msg.includes("429")
-      ? "⏳ Rate limit hit. Wait 60 seconds and try again. (Free Gemini = 15 req/min)"
+    const isRateLimit = msg.includes("rate limit")||msg.includes("429")||msg.includes("Rate limited");
+    const friendly = isRateLimit
+      ? "⏳ Rate limit hit — Gemini free tier allows 15 requests/minute."
       : msg.includes("Invalid API key")||msg.includes("403")
-      ? "🔑 Invalid API key. Click ⚙ to re-enter your key from aistudio.google.com"
+      ? "🔑 Invalid API key. Click ⚙ and re-enter your key from aistudio.google.com"
       : "⚠ "+msg;
-    document.getElementById("errMsg").innerHTML=friendly+'<br><br><span style="color:#1A2A3A;font-size:9px">Tip: If you keep hitting rate limits, wait 1 min between scans.</span>';
+    document.getElementById("errMsg").innerHTML = friendly;
+
+    // Auto-retry countdown for rate limit errors
+    if (isRateLimit) {
+      const cd = document.getElementById("errCountdown");
+      const secsEl = document.getElementById("errSecs");
+      const barEl = document.getElementById("errBar");
+      cd.style.display = "block";
+      let secs = 62;
+      barEl.style.width = "100%";
+      const iv = setInterval(() => {
+        secs--;
+        secsEl.textContent = secs;
+        barEl.style.width = (secs / 62 * 100) + "%";
+        if (secs <= 0) {
+          clearInterval(iv);
+          cd.style.display = "none";
+          scan(); // auto-retry
+        }
+      }, 1000);
+    }
   }
   clearInterval(loadIv);
   loading=false;btn.textContent="▶ SCAN MARKET";btn.disabled=false;
