@@ -213,6 +213,12 @@ input:focus{border-color:#2A4060}
       </div>
 
       <button id="rescanBtn" style="background:#080C12;padding:12px;font-size:11px;letter-spacing:3px;border-radius:3px;width:100%;color:#3A5068;border:1px solid #1A2A3A">↻ RESCAN</button>
+      <div id="cooldownBar" style="display:none;margin-top:6px">
+        <div style="font-size:9px;color:#1A2A3A;letter-spacing:2px;margin-bottom:4px;text-align:center">COOLDOWN</div>
+        <div style="background:#0E1820;border-radius:3px;height:4px;overflow:hidden">
+          <div id="cooldownFill" style="height:100%;background:#FFBE00;width:0%;transition:width .5s linear;box-shadow:0 0 6px #FFBE00"></div>
+        </div>
+      </div>
     </div>
 
     <div id="histWrap" class="card" style="display:none">
@@ -394,20 +400,45 @@ function setStep(s){
   [0,1,2,3].forEach(i=>{const b=document.getElementById("lb"+i);b.style.height=i<=s?"28px":"14px";b.style.background=i<=s?"#FFBE00":"#0E1820";b.style.boxShadow=i<=s?"0 0 8px #FFBE00":"none";});
 }
 
-/* ── Gemini AI call ── */
+/* ── Gemini AI call with retry + model fallback ── */
 async function callGemini(prompt){
   const key=getKey();
-  const body={
-    contents:[{parts:[{text:prompt}]}],
-    generationConfig:{temperature:0.3,maxOutputTokens:1024}
-  };
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-    {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"});
-  if(res.status===400){const e=await res.json();throw new Error("Gemini API error: "+(e?.error?.message||"Bad request"));}
-  if(res.status===403){throw new Error("Invalid API key. Click ⚙ to update it.");}
-  if(!res.ok)throw new Error("Gemini error "+res.status);
-  const data=await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text||"";
+  // Try models in order — flash-lite is highest free RPM
+  const models=["gemini-1.5-flash-latest","gemini-2.0-flash","gemini-1.5-flash-8b"];
+  const body={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:1024}};
+
+  for(let m=0; m<models.length; m++){
+    const model=models[m];
+    for(let attempt=0; attempt<3; attempt++){
+      try{
+        if(attempt>0){
+          // Exponential backoff: 5s, 15s
+          const wait=(attempt===1?5000:15000);
+          document.getElementById("loadTxt").textContent=`Rate limited — retrying in ${wait/1000}s…`;
+          await new Promise(r=>setTimeout(r,wait));
+        }
+        const res=await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+          {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"}
+        );
+        if(res.status===429){
+          console.warn(`429 on ${model} attempt ${attempt+1}`);
+          if(attempt===2&&m<models.length-1) break; // try next model
+          continue; // retry same model
+        }
+        if(res.status===403){throw new Error("Invalid API key — click ⚙ to update it.");}
+        if(res.status===400){const e=await res.json();throw new Error("Gemini: "+(e?.error?.message||"Bad request"));}
+        if(!res.ok){console.warn(`${res.status} on ${model}`);break;}
+        const data=await res.json();
+        const text=data?.candidates?.[0]?.content?.parts?.[0]?.text||"";
+        if(text) return text;
+      }catch(e){
+        if(e.message.includes("Invalid API key")||e.message.includes("Gemini:")) throw e;
+        console.warn(e);
+      }
+    }
+  }
+  throw new Error("Gemini rate limit exceeded. Wait 1 minute and try again, or check your API key at aistudio.google.com");
 }
 
 /* ── Render ── */
@@ -577,7 +608,14 @@ Respond ONLY with raw JSON (no markdown, no backticks):
   }catch(e){
     console.error(e);
     showOnly("errBox");
-    document.getElementById("errMsg").textContent="⚠ "+e.message;
+    const msg = e.message||"Unknown error";
+    // Friendly messages for common errors
+    const friendly = msg.includes("rate limit")||msg.includes("429")
+      ? "⏳ Rate limit hit. Wait 60 seconds and try again. (Free Gemini = 15 req/min)"
+      : msg.includes("Invalid API key")||msg.includes("403")
+      ? "🔑 Invalid API key. Click ⚙ to re-enter your key from aistudio.google.com"
+      : "⚠ "+msg;
+    document.getElementById("errMsg").innerHTML=friendly+'<br><br><span style="color:#1A2A3A;font-size:9px">Tip: If you keep hitting rate limits, wait 1 min between scans.</span>';
   }
   clearInterval(loadIv);
   loading=false;btn.textContent="▶ SCAN MARKET";btn.disabled=false;
