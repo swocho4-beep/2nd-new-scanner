@@ -499,22 +499,41 @@ async function tryGemini(prompt){
 async function tryOpenRouter(prompt){
   const key=getORKey();
   if(!key) return null;
-  const models=["meta-llama/llama-3.1-8b-instruct:free","mistralai/mistral-7b-instruct:free","google/gemma-2-9b-it:free"];
+  // Best free models on OpenRouter as of 2026
+  const models=[
+    "deepseek/deepseek-chat-v3-0324:free",
+    "deepseek/deepseek-r1-0528:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "google/gemma-3-12b-it:free",
+  ];
   for(const model of models){
     try{
-      setMsg(`Backup AI: ${model.split("/")[1].split(":")[0]}…`);
+      const shortName=model.split("/")[1]?.split(":")[0]||model;
+      setMsg(`Backup AI: ${shortName}…`);
       const res=await fetch("https://openrouter.ai/api/v1/chat/completions",{
         method:"POST",
-        headers:{"Content-Type":"application/json","Authorization":`Bearer ${key}`,"HTTP-Referer":location.href,"X-Title":"AI Trading Scanner"},
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":`Bearer ${key}`,
+          "HTTP-Referer":location.href,
+          "X-Title":"AI Trading Scanner"
+        },
         body:JSON.stringify({model,messages:[{role:"user",content:prompt}],max_tokens:800,temperature:0.3}),
         cache:"no-store"
       });
-      if(res.status===429){console.warn("OR rate limited");continue;}
-      if(!res.ok){console.warn("OR HTTP",res.status);continue;}
+      if(res.status===429){console.warn("OR 429:",model);continue;}
+      if(res.status===401){throw new Error("INVALID_OR_KEY");}
+      if(!res.ok){const t=await res.text();console.warn("OR HTTP",res.status,model,t.slice(0,80));continue;}
       const data=await res.json();
+      if(data.error){console.warn("OR error in response:",data.error?.message||data.error);continue;}
       const text=data?.choices?.[0]?.message?.content||"";
-      if(text) return text;
-    }catch(e){console.warn("OR",model,e.message);}
+      if(text){console.log("OR success:",model);return text;}
+    }catch(e){
+      if(e.message==="INVALID_OR_KEY") throw new Error("Invalid OpenRouter key — click ⚙ to update.");
+      console.warn("OR failed:",model,e.message);
+    }
   }
   return null;
 }
