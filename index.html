@@ -40,57 +40,66 @@ button:disabled{cursor:not-allowed}
 .free-badge{background:#001A0A;border:1px solid #00CC7033;color:#00CC70;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
 .live-badge{background:#0A0A1A;border:1px solid #4A8AFF33;color:#4A8AFF;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px}
 .fade{animation:fadein .4s ease}
-/* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px)}
-.modal-box{background:#0A0E14;border:1px solid #1A2A3A;border-radius:8px;padding:32px;max-width:480px;width:92%;animation:fadein .3s ease}
+.modal-box{background:#0A0E14;border:1px solid #1A2A3A;border-radius:8px;padding:32px;max-width:500px;width:92%;animation:fadein .3s ease}
 input[type=password],input[type=text]{background:#06080C;border:1px solid #1A2A3A;color:#C8DCF0;padding:10px 14px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;width:100%;outline:none;letter-spacing:1px;margin-top:6px}
 input:focus{border-color:#2A4060}
+.settings-panel{display:none;background:#080C12;border-bottom:2px solid #1A2A3A;padding:16px 20px;animation:fadein .2s ease}
 </style>
 </head>
 <body>
 <div class="scanline"></div>
 
-<!-- API Key Modal -->
+<!-- ══ KEY SETUP MODAL ══ -->
 <div class="modal-bg" id="keyModal">
   <div class="modal-box">
-    <div style="text-align:center;margin-bottom:24px">
-      <div style="font-size:32px;margin-bottom:10px">◈</div>
-      <div style="color:#C8DCF0;font-size:15px;letter-spacing:3px;margin-bottom:4px">AI SIGNAL SCANNER</div>
-      <div style="color:#2A3A4A;font-size:10px;letter-spacing:2px">POWERED BY GOOGLE GEMINI · FREE</div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:32px;margin-bottom:8px">◈</div>
+      <div style="color:#C8DCF0;font-size:15px;letter-spacing:3px">AI SIGNAL SCANNER</div>
+      <div style="color:#2A3A4A;font-size:9px;letter-spacing:2px;margin-top:3px">FREE · LIVE PRICES · GOOGLE GEMINI</div>
     </div>
 
-    <!-- Steps -->
-    <div style="background:#06080C;border:1px solid #0E1820;border-radius:6px;padding:16px;margin-bottom:20px;font-size:10px;line-height:2;color:#3A5068">
-      <div style="color:#4A8AFF;letter-spacing:2px;font-size:9px;margin-bottom:8px">HOW TO GET YOUR FREE API KEY (2 minutes)</div>
-      <div><span style="color:#4A8AFF">1.</span> Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6AAAFF;text-decoration:none">aistudio.google.com/apikey</a></div>
-      <div><span style="color:#4A8AFF">2.</span> Sign in with any Google account</div>
-      <div><span style="color:#4A8AFF">3.</span> Click <strong style="color:#C8DCF0">"Create API Key"</strong></div>
-      <div><span style="color:#4A8AFF">4.</span> Copy the key and paste it below</div>
-      <div style="margin-top:8px;color:#1A2A3A;font-size:9px">✓ Free tier: 1,500 requests/day · No credit card · No billing</div>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <div style="font-size:9px;letter-spacing:2px;color:#2A3A4A">YOUR GEMINI API KEY</div>
-      <div style="position:relative">
-        <input type="password" id="keyInput" placeholder="AIza..." autocomplete="off"/>
-        <button onclick="toggleShow()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#3A5068;font-size:13px;margin-top:3px" id="eyeBtn">👁</button>
+    <!-- Gemini Key -->
+    <div style="background:#06080C;border:1px solid #0E1820;border-radius:6px;padding:14px;margin-bottom:12px">
+      <div style="color:#4A8AFF;font-size:9px;letter-spacing:2px;margin-bottom:8px">① GEMINI API KEY — FREE 1,500/DAY</div>
+      <div style="font-size:10px;color:#3A5068;line-height:1.9;margin-bottom:10px">
+        Go to <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#6AAAFF">aistudio.google.com/apikey</a>
+        → Sign in → <strong style="color:#C8DCF0">Create API Key</strong> → Copy
       </div>
-      <div id="keyErr" style="color:#FF5C7A;font-size:9px;margin-top:6px;display:none"></div>
+      <div style="position:relative">
+        <input type="password" id="keyInput" placeholder="AIza..."/>
+        <button onclick="toggleShow('keyInput','eye1')" id="eye1" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#3A5068;font-size:13px;margin-top:3px">👁</button>
+      </div>
     </div>
 
-    <button onclick="saveKey()" style="width:100%;background:linear-gradient(135deg,#1A3A6A,#0E2040);border:1px solid #2A5090;color:#6AAAFF;padding:13px;border-radius:4px;font-size:12px;letter-spacing:3px;margin-bottom:12px">
+    <!-- OpenRouter Key -->
+    <div style="background:#06080C;border:1px solid #0E1820;border-radius:6px;padding:14px;margin-bottom:16px">
+      <div style="color:#FFBE00;font-size:9px;letter-spacing:2px;margin-bottom:8px">② OPENROUTER KEY — FREE BACKUP (OPTIONAL BUT RECOMMENDED)</div>
+      <div style="font-size:10px;color:#3A5068;line-height:1.9;margin-bottom:10px">
+        Go to <a href="https://openrouter.ai" target="_blank" style="color:#6AAAFF">openrouter.ai</a>
+        → Sign up free → <strong style="color:#C8DCF0">Keys → Create Key</strong> → Copy<br>
+        <span style="color:#1A2A3A;font-size:9px">Used when Gemini daily limit runs out. No daily limit.</span>
+      </div>
+      <div style="position:relative">
+        <input type="password" id="orInput" placeholder="sk-or-v1-... (optional)"/>
+        <button onclick="toggleShow('orInput','eye2')" id="eye2" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#3A5068;font-size:13px;margin-top:3px">👁</button>
+      </div>
+    </div>
+
+    <div id="keyErr" style="color:#FF5C7A;font-size:10px;margin-bottom:10px;display:none"></div>
+    <button onclick="saveKeys()" style="width:100%;background:linear-gradient(135deg,#1A3A6A,#0E2040);border:1px solid #2A5090;color:#6AAAFF;padding:13px;border-radius:4px;font-size:12px;letter-spacing:3px;margin-bottom:10px">
       ▶ START SCANNING FREE
     </button>
-
     <div style="font-size:9px;color:#1A2A3A;text-align:center;line-height:1.8">
-      Key saved in your browser only · Never sent to any server except Google<br>
-      <span style="color:#0E1820">Gemini 2.0 Flash · Free · Fast · Accurate</span>
+      Keys saved in your browser only · Never sent anywhere except Google/OpenRouter
     </div>
   </div>
 </div>
 
-<!-- Main App -->
+<!-- ══ MAIN APP ══ -->
 <div id="app" style="display:none">
+
+  <!-- Header -->
   <div class="hdr">
     <div style="display:flex;align-items:center;gap:12px">
       <div id="assetIcon" style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#0E1820;border:1px solid #1A2A3A">◈</div>
@@ -101,26 +110,59 @@ input:focus{border-color:#2A4060}
           <span id="hdrTf" style="font-size:10px;color:#1A3048;margin-left:8px">[5M]</span>
           <span class="free-badge" style="margin-left:8px">FREE</span>
           <span class="live-badge" style="margin-left:4px">LIVE PRICE</span>
+          <span id="orBadge" style="display:none;margin-left:4px;background:#1A1000;border:1px solid #FFBE0033;color:#FFBE00;font-size:9px;letter-spacing:2px;padding:3px 8px;border-radius:2px">OR BACKUP ✓</span>
         </div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px">
       <div id="loadMsg" style="display:none;font-size:10px;color:#FFBE00;letter-spacing:2px">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#FFBE00;animation:pulse .7s infinite;vertical-align:middle;margin-right:6px"></span>
         <span id="loadTxt">Scanning…</span>
       </div>
       <button id="scanBtn" style="background:linear-gradient(135deg,#0E2030,#0A1825);border:1px solid #2A4060;color:#6A9ABD;padding:8px 22px;font-size:11px;letter-spacing:2px;border-radius:3px">▶ SCAN MARKET</button>
-      <button onclick="clearKey()" title="Change API key" style="background:none;border:1px solid #0E1820;color:#1A2A3A;padding:8px 10px;border-radius:3px;font-size:11px">⚙</button>
+      <button onclick="toggleSettings()" title="Settings" style="background:none;border:1px solid #0E1820;color:#2A3A4A;padding:8px 10px;border-radius:3px;font-size:13px">⚙</button>
     </div>
   </div>
 
+  <!-- Settings Panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <div style="max-width:700px;margin:0 auto">
+      <div style="font-size:9px;letter-spacing:3px;color:#2A3A4A;margin-bottom:12px">API KEY SETTINGS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:9px;color:#4A8AFF;letter-spacing:1px;margin-bottom:5px">GEMINI KEY <span id="gStatus">○</span></div>
+          <div style="display:flex;gap:6px">
+            <input type="password" id="gKeyEdit" placeholder="AIza..." style="margin-top:0;padding:7px 10px;font-size:11px"/>
+            <button onclick="updateGeminiKey()" style="background:#0E2030;border:1px solid #2A4060;color:#6A9ABD;padding:7px 12px;border-radius:3px;font-size:10px;white-space:nowrap">SAVE</button>
+          </div>
+          <div style="font-size:9px;color:#1A2A3A;margin-top:4px">aistudio.google.com/apikey</div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:#FFBE00;letter-spacing:1px;margin-bottom:5px">OPENROUTER KEY <span id="oStatus">○</span></div>
+          <div style="display:flex;gap:6px">
+            <input type="password" id="oKeyEdit" placeholder="sk-or-v1-..." style="margin-top:0;padding:7px 10px;font-size:11px"/>
+            <button onclick="updateORKey()" style="background:#0E2030;border:1px solid #FFBE0033;color:#FFBE00;padding:7px 12px;border-radius:3px;font-size:10px;white-space:nowrap">SAVE</button>
+          </div>
+          <div style="font-size:9px;color:#1A2A3A;margin-top:4px">openrouter.ai → Keys → Create</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;text-align:right">
+        <button onclick="resetAll()" style="background:none;border:none;color:#3A1A2A;font-size:9px;font-family:inherit;letter-spacing:1px;cursor:pointer">RESET ALL KEYS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticker -->
   <div class="ticker-wrap"><div class="ticker-inner" id="ticker">Loading live prices…</div></div>
 
+  <!-- Body -->
   <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-width:960px;margin:0 auto">
+
     <div class="tab-wrap">
       <button class="tab-btn active" onclick="switchTab('CRYPTO')">⬡ CRYPTO</button>
       <button class="tab-btn" onclick="switchTab('COMMODITY')">◈ COMMODITY</button>
     </div>
+
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <div class="pill-row" id="assetRow" style="flex:1"></div>
       <div class="pill-row" id="tfRow"></div>
@@ -138,12 +180,13 @@ input:focus{border-color:#2A4060}
           <div id="stripChange" style="font-size:11px">—</div>
           <div>
             <div id="stripSource" style="font-size:9px;color:#4A8AFF;letter-spacing:1px">—</div>
-            <div id="stripTime"   style="font-size:8px;color:#1A2A3A;letter-spacing:1px">—</div>
+            <div id="stripTime" style="font-size:8px;color:#1A2A3A;letter-spacing:1px">—</div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- States -->
     <div id="idleBox" class="card fade" style="padding:52px 20px;text-align:center">
       <div style="font-size:30px;margin-bottom:12px;opacity:.3">⬡</div>
       <div style="color:#1A2A3A;font-size:11px;letter-spacing:3px">READY TO SCAN</div>
@@ -152,36 +195,30 @@ input:focus{border-color:#2A4060}
 
     <div id="loadBox" class="card fade" style="display:none;padding:48px 20px;text-align:center">
       <div class="load-bars">
-        <div class="load-bar" id="lb0" style="height:14px"></div>
-        <div class="load-bar" id="lb1" style="height:14px"></div>
-        <div class="load-bar" id="lb2" style="height:14px"></div>
-        <div class="load-bar" id="lb3" style="height:14px"></div>
+        <div class="load-bar" id="lb0"></div>
+        <div class="load-bar" id="lb1"></div>
+        <div class="load-bar" id="lb2"></div>
+        <div class="load-bar" id="lb3"></div>
       </div>
       <div id="loadLabel" style="color:#FFBE00;font-size:11px;letter-spacing:3px;margin-top:16px">Fetching live price…</div>
-      <div id="loadSub"   style="color:#1A2A3A;font-size:10px;margin-top:6px"></div>
+      <div id="loadSub" style="color:#1A2A3A;font-size:10px;margin-top:6px"></div>
     </div>
 
     <div id="errBox" class="card fade" style="display:none;background:#0E0810;border-color:#FF205044">
-      <div id="errMsg" style="color:#FF5C7A;font-size:11px;line-height:1.7;margin-bottom:8px"></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <div style="color:#3A1A2A;font-size:10px;flex:1">Click retry or wait 60s.</div>
+      <div id="errMsg" style="color:#FF5C7A;font-size:11px;line-height:1.8;margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="color:#3A1A2A;font-size:10px;flex:1">Check your keys in ⚙ settings.</div>
         <button onclick="scan()" style="background:#0E1820;border:1px solid #FF205044;color:#FF5C7A;padding:6px 14px;font-size:10px;border-radius:3px;letter-spacing:1px">↻ RETRY</button>
       </div>
-      <div id="errCountdown" style="display:none;margin-top:10px">
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:#2A3A4A;margin-bottom:4px;letter-spacing:1px">
-          <span>AUTO-RETRY IN</span><span id="errSecs">60</span>
-        </div>
-        <div style="background:#0E1820;border-radius:3px;height:3px">
-          <div id="errBar" style="height:100%;background:#FF5C7A;width:100%;transition:width 1s linear;border-radius:3px"></div>
-        </div>
-      </div>
+      <div id="errExtra" style="margin-top:10px"></div>
     </div>
 
+    <!-- Result -->
     <div id="resultWrap" style="display:none;flex-direction:column;gap:10px" class="fade">
       <div id="sigBanner" class="card sig-grid" style="border-left-width:3px;border-left-style:solid">
         <div>
-          <div id="sigMeta"    style="font-size:9px;letter-spacing:4px;color:#1A2A3A;margin-bottom:8px">SIGNAL</div>
-          <div id="sigLabel"   style="font-size:26px;font-weight:500;letter-spacing:2px;margin-bottom:8px;color:#3A5068">— WAITING</div>
+          <div id="sigMeta" style="font-size:9px;letter-spacing:4px;color:#1A2A3A;margin-bottom:8px">SIGNAL</div>
+          <div id="sigLabel" style="font-size:26px;font-weight:500;letter-spacing:2px;margin-bottom:8px;color:#3A5068">— WAITING</div>
           <div id="sigSummary" style="font-size:11px;color:#3A5068;line-height:1.7;max-width:260px"></div>
         </div>
         <div style="text-align:center">
@@ -197,15 +234,15 @@ input:focus{border-color:#2A4060}
         </div>
         <div>
           <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:6px">LIVE PRICE</div>
-          <div id="priceVal"    style="font-size:20px;color:#C8DCF0;font-weight:500;letter-spacing:1px">—</div>
-          <div id="priceAsset"  style="font-size:10px;color:#1A2A3A;margin-top:3px"></div>
+          <div id="priceVal" style="font-size:20px;color:#C8DCF0;font-weight:500;letter-spacing:1px">—</div>
+          <div id="priceAsset" style="font-size:10px;color:#1A2A3A;margin-top:3px"></div>
           <div id="priceSource" style="font-size:8px;color:#4A8AFF;margin-top:2px;letter-spacing:1px"></div>
         </div>
         <div id="dirBox" style="border-radius:4px;padding:14px 18px;text-align:center;min-width:140px;background:#080C12;border:1px solid #1A2A3A">
           <div style="font-size:9px;letter-spacing:2px;color:#1A2A3A;margin-bottom:8px">DIRECTION</div>
-          <div id="dirIcon"  style="font-size:22px">⏳</div>
+          <div id="dirIcon" style="font-size:22px">⏳</div>
           <div id="dirLabel" style="font-size:12px;font-weight:500;margin-top:4px;letter-spacing:1px;color:#FFBE00">WAIT</div>
-          <div id="dirSub"   style="font-size:9px;margin-top:4px;color:#2A3A4A;line-height:1.5">No clear trend</div>
+          <div id="dirSub" style="font-size:9px;margin-top:4px;color:#2A3A4A;line-height:1.5">No clear trend</div>
         </div>
       </div>
 
@@ -224,157 +261,150 @@ input:focus{border-color:#2A4060}
       </div>
 
       <button id="rescanBtn" style="background:#080C12;padding:12px;font-size:11px;letter-spacing:3px;border-radius:3px;width:100%;color:#3A5068;border:1px solid #1A2A3A">↻ RESCAN</button>
-      <div id="cooldownBar" style="display:none;margin-top:6px">
-        <div style="font-size:9px;color:#1A2A3A;letter-spacing:2px;margin-bottom:4px;text-align:center">COOLDOWN</div>
-        <div style="background:#0E1820;border-radius:3px;height:4px;overflow:hidden">
-          <div id="cooldownFill" style="height:100%;background:#FFBE00;width:0%;transition:width .5s linear;box-shadow:0 0 6px #FFBE00"></div>
-        </div>
-      </div>
     </div>
 
+    <!-- History -->
     <div id="histWrap" class="card" style="display:none">
       <div style="font-size:9px;letter-spacing:3px;color:#1A2A3A;margin-bottom:10px">SCAN HISTORY</div>
       <div id="histList" style="display:flex;flex-direction:column;gap:2px"></div>
     </div>
 
+    <!-- Footer -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="card" style="background:#080A06;border-color:#0E1408;font-size:9px;color:#2A3A20;line-height:1.8;letter-spacing:1px">
         ⚠ AI-POWERED · REAL LIVE PRICES<br>NOT FINANCIAL ADVICE<br>ALWAYS USE DEMO FIRST
       </div>
       <div class="card" style="font-size:9px;color:#1A2A3A;line-height:1.8">
-        <div style="color:#2A3A4A;margin-bottom:3px">AI ENGINE</div>
-        Google Gemini 2.0 Flash<br>
-        <span style="color:#0E1820">Free · 1,500 req/day</span>
+        <div style="color:#2A3A4A;margin-bottom:2px">AI ENGINE</div>
+        Gemini 2.0 Flash Lite (primary)<br>
+        OpenRouter Llama/Mistral (backup)
       </div>
     </div>
-    <div style="text-align:center;padding:8px 0;font-size:9px;color:#0E1820;letter-spacing:2px">
-      FREE · REAL LIVE PRICES · GOOGLE GEMINI AI
+    <div style="text-align:center;padding:6px 0;font-size:9px;color:#0E1820;letter-spacing:2px">
+      FREE · REAL LIVE PRICES · DUAL AI ENGINE
     </div>
   </div>
 </div>
 
 <script>
-/* ── Data ── */
+/* ════════════════════════════════════════
+   CONSTANTS
+════════════════════════════════════════ */
 const ASSETS=[
-  {symbol:"BTC",    label:"BTC/USD",    accent:"#F7931A",type:"crypto",   cgId:"bitcoin"},
-  {symbol:"ETH",    label:"ETH/USD",    accent:"#627EEA",type:"crypto",   cgId:"ethereum"},
-  {symbol:"BNB",    label:"BNB/USD",    accent:"#F3BA2F",type:"crypto",   cgId:"binancecoin"},
-  {symbol:"SOL",    label:"SOL/USD",    accent:"#9945FF",type:"crypto",   cgId:"solana"},
-  {symbol:"XRP",    label:"XRP/USD",    accent:"#00AAE4",type:"crypto",   cgId:"ripple"},
-  {symbol:"DOGE",   label:"DOGE/USD",   accent:"#C2A633",type:"crypto",   cgId:"dogecoin"},
-  {symbol:"XAUUSD", label:"GOLD/USD",   accent:"#FFD700",type:"commodity",cgId:"gold"},
-  {symbol:"XAGUSD", label:"SILVER/USD", accent:"#C0C0C0",type:"commodity",cgId:"silver"},
+  {symbol:"BTC",  label:"BTC/USD",   accent:"#F7931A",type:"crypto",   cgId:"bitcoin"},
+  {symbol:"ETH",  label:"ETH/USD",   accent:"#627EEA",type:"crypto",   cgId:"ethereum"},
+  {symbol:"BNB",  label:"BNB/USD",   accent:"#F3BA2F",type:"crypto",   cgId:"binancecoin"},
+  {symbol:"SOL",  label:"SOL/USD",   accent:"#9945FF",type:"crypto",   cgId:"solana"},
+  {symbol:"XRP",  label:"XRP/USD",   accent:"#00AAE4",type:"crypto",   cgId:"ripple"},
+  {symbol:"DOGE", label:"DOGE/USD",  accent:"#C2A633",type:"crypto",   cgId:"dogecoin"},
+  {symbol:"XAUUSD",label:"GOLD/USD", accent:"#FFD700",type:"commodity",cgId:"gold"},
+  {symbol:"XAGUSD",label:"SILVER/USD",accent:"#C0C0C0",type:"commodity",cgId:"silver"},
 ];
 const TF_SHORT  =["1M","5M","15M","30M","1H","4H"];
 const TIMEFRAMES=["1 minute","5 minutes","15 minutes","30 minutes","1 hour","4 hours"];
 const SIG_META={
-  "STRONG BUY": {color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
-  "BUY":        {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
-  "NEUTRAL":    {color:"#FFBE00",glow:"#FFBE0018",icon:"━"},
-  "SELL":       {color:"#FF5C7A",glow:"#FF5C7A22",icon:"▼"},
+  "STRONG BUY":{color:"#00FF9D",glow:"#00FF9D33",icon:"▲▲"},
+  "BUY":       {color:"#00CC70",glow:"#00CC7022",icon:"▲"},
+  "NEUTRAL":   {color:"#FFBE00",glow:"#FFBE0018",icon:"━"},
+  "SELL":      {color:"#FF5C7A",glow:"#FF5C7A22",icon:"▼"},
   "STRONG SELL":{color:"#FF2050",glow:"#FF205033",icon:"▼▼"},
 };
 const IND_C={BULLISH:"#00CC70",BEARISH:"#FF5C7A",UPTREND:"#00CC70",DOWNTREND:"#FF5C7A",UPPER:"#FF5C7A",LOWER:"#00CC70",NEUTRAL:"#3A5068",MIDDLE:"#3A5068"};
 const STEPS=["Fetching live price…","Analyzing market data…","Calculating indicators…","Generating signal…"];
+const G_KEY ="gemini_api_key_v1";
+const OR_KEY ="openrouter_api_key_v1";
 
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
 let tab="CRYPTO",asset=ASSETS[0],tfIdx=1,loading=false,scanHistory=[],loadStep=0,loadIv=null;
-let livePrice=null,liveChange=null,livePriceSource="";
+let livePrice=null,liveChange=null,livePriceSource="",lastAICall=0;
 
-/* ── Key management ── */
-const KEY_STORE="gemini_api_key_v1";
-const getKey=()=>localStorage.getItem(KEY_STORE)||"";
-const saveKey=()=>{
-  const k=document.getElementById("keyInput").value.trim();
-  if(!k.startsWith("AIza")){showKeyErr("Key must start with AIza…");return;}
-  localStorage.setItem(KEY_STORE,k);
+/* ════════════════════════════════════════
+   KEY MANAGEMENT
+════════════════════════════════════════ */
+const getGKey =()=>localStorage.getItem(G_KEY)||"";
+const getORKey=()=>localStorage.getItem(OR_KEY)||"";
+
+function saveKeys(){
+  const gk=document.getElementById("keyInput").value.trim();
+  const ok=document.getElementById("orInput").value.trim();
+  if(!gk.startsWith("AIza")){
+    const e=document.getElementById("keyErr");
+    e.textContent="Gemini key must start with AIza…";e.style.display="block";return;
+  }
+  localStorage.setItem(G_KEY,gk);
+  if(ok) localStorage.setItem(OR_KEY,ok);
   document.getElementById("keyModal").style.display="none";
   document.getElementById("app").style.display="block";
+  updateKeyBadges();
   refreshTicker();
-};
-const clearKey=()=>{localStorage.removeItem(KEY_STORE);location.reload();};
-const saveORKey=()=>{
-  const inp=document.getElementById("orKeyInput");
-  if(!inp) return;
-  const k=inp.value.trim();
-  if(!k){return;}
-  localStorage.setItem(OR_STORE,k);
-  document.getElementById("errCountdown").style.display="none";
-  document.getElementById("errMsg").innerHTML="✓ OpenRouter key saved! Retrying…";
-  setTimeout(scan,800);
-};
-const showKeyErr=m=>{const e=document.getElementById("keyErr");e.textContent=m;e.style.display="block"};
-const toggleShow=()=>{
-  const i=document.getElementById("keyInput");
-  const b=document.getElementById("eyeBtn");
+}
+function updateGeminiKey(){
+  const v=document.getElementById("gKeyEdit").value.trim();
+  if(!v.startsWith("AIza")){alert("Must start with AIza");return;}
+  localStorage.setItem(G_KEY,v);
+  document.getElementById("gStatus").textContent="●";
+  document.getElementById("gStatus").style.color="#00CC70";
+  toggleSettings();
+}
+function updateORKey(){
+  const v=document.getElementById("oKeyEdit").value.trim();
+  if(!v){return;}
+  localStorage.setItem(OR_KEY,v);
+  document.getElementById("oStatus").textContent="●";
+  document.getElementById("oStatus").style.color="#FFBE00";
+  updateKeyBadges();
+  toggleSettings();
+}
+function resetAll(){if(confirm("Reset all keys?")){localStorage.removeItem(G_KEY);localStorage.removeItem(OR_KEY);location.reload();}}
+function updateKeyBadges(){
+  const orBadge=document.getElementById("orBadge");
+  if(orBadge) orBadge.style.display=getORKey()?"inline":"none";
+}
+function toggleShow(inputId,btnId){
+  const i=document.getElementById(inputId);
+  const b=document.getElementById(btnId);
   i.type=i.type==="password"?"text":"password";
   b.textContent=i.type==="password"?"👁":"🙈";
-};
-document.getElementById("keyInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveKey();});
+}
+function toggleSettings(){
+  const p=document.getElementById("settingsPanel");
+  p.style.display=p.style.display==="block"?"none":"block";
+  if(p.style.display==="block"){
+    const gk=getGKey();const ok=getORKey();
+    if(gk){document.getElementById("gStatus").textContent="●";document.getElementById("gStatus").style.color="#00CC70";}
+    if(ok){document.getElementById("oStatus").textContent="●";document.getElementById("oStatus").style.color="#FFBE00";}
+    document.getElementById("gKeyEdit").placeholder=gk?gk.slice(0,8)+"…":"AIza...";
+    document.getElementById("oKeyEdit").placeholder=ok?ok.slice(0,10)+"…":"sk-or-v1-...";
+  }
+}
 
-/* ── Live price fetcher ── */
+/* ════════════════════════════════════════
+   LIVE PRICE FETCHER
+   Crypto:    Binance → CoinGecko → Kraken
+   Commodity: Bybit → OKX → Gate.io → CoinGecko
+════════════════════════════════════════ */
 async function fetchLivePrice(a){
   const ts=Date.now();
   if(a.type==="crypto"){
-    // 1. Binance — most accurate, best CORS
-    try{
-      const res=await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${a.symbol}USDT&_=${ts}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();if(d.lastPrice)return{price:parseFloat(d.lastPrice),change:parseFloat(d.priceChangePercent),source:"Binance"};}
-    }catch(e){}
-    // 2. CoinGecko
-    try{
-      const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${a.cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const p=d[a.cgId];if(p&&p.usd)return{price:p.usd,change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}
-    }catch(e){}
-    // 3. Kraken
-    try{
-      const km={BTC:"XXBTZUSD",ETH:"XETHZUSD",SOL:"SOLUSD",XRP:"XXRPZUSD",DOGE:"XDGUSD",BNB:"BNBUSD"};
-      const pair=km[a.symbol];
-      if(pair){const res=await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`,{cache:"no-store"});if(res.ok){const d=await res.json();const key=Object.keys(d.result||{})[0];if(key){const price=parseFloat(d.result[key].c[0]);return{price,change:null,source:"Kraken"};}}}
-    }catch(e){}
+    try{const r=await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${a.symbol}USDT&_=${ts}`,{cache:"no-store"});if(r.ok){const d=await r.json();if(d.lastPrice)return{price:parseFloat(d.lastPrice),change:parseFloat(d.priceChangePercent),source:"Binance"};}}catch(e){}
+    try{const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${a.cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});if(r.ok){const d=await r.json();const p=d[a.cgId];if(p&&p.usd)return{price:p.usd,change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}}catch(e){}
+    try{const km={BTC:"XXBTZUSD",ETH:"XETHZUSD",SOL:"SOLUSD",XRP:"XXRPZUSD",DOGE:"XDGUSD",BNB:"BNBUSD"};const pair=km[a.symbol];if(pair){const r=await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`,{cache:"no-store"});if(r.ok){const d=await r.json();const k=Object.keys(d.result||{})[0];if(k)return{price:parseFloat(d.result[k].c[0]),change:null,source:"Kraken"};}}}catch(e){}
   }
   if(a.type==="commodity"){
     const isGold=a.symbol==="XAUUSD";
-    const ts=Date.now();
-
-    // 1. Bybit spot — XAU/USDT and XAG/USDT (CORS supported)
-    try{
-      const sym=isGold?"XAUUSDT":"XAGUSDT";
-      const res=await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}&_=${ts}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const item=d?.result?.list?.[0];if(item&&item.lastPrice&&parseFloat(item.lastPrice)>0)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt||0)*100,source:"Bybit"};}
-    }catch(e){console.warn("Bybit commodity failed",e);}
-
-    // 2. Bybit inverse perpetual (different endpoint)
-    try{
-      const sym=isGold?"XAUUSD":"XAGUSD";
-      const res=await fetch(`https://api.bybit.com/v5/market/tickers?category=inverse&symbol=${sym}&_=${ts}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const item=d?.result?.list?.[0];if(item&&item.lastPrice&&parseFloat(item.lastPrice)>0)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt||0)*100,source:"Bybit"};}
-    }catch(e){}
-
-    // 3. OKX — supports gold/silver spot with CORS
-    try{
-      const sym=isGold?"XAU-USDT":"XAG-USDT";
-      const res=await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${sym}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const item=d?.data?.[0];if(item&&item.last&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"OKX"};}
-    }catch(e){console.warn("OKX failed",e);}
-
-    // 4. Gate.io spot
-    try{
-      const sym=isGold?"XAU_USDT":"XAG_USDT";
-      const res=await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${sym}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const item=Array.isArray(d)?d[0]:d;if(item&&item.last&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"Gate.io"};}
-    }catch(e){console.warn("Gate.io failed",e);}
-
-    // 5. CoinGecko for gold/silver (they have it)
-    try{
-      const cgId=isGold?"gold":"silver";
-      const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});
-      if(res.ok){const d=await res.json();const p=d[cgId];if(p&&p.usd&&p.usd>(isGold?1000:10))return{price:+p.usd.toFixed(2),change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}
-    }catch(e){console.warn("CoinGecko metals failed",e);}
+    try{const sym=isGold?"XAUUSDT":"XAGUSDT";const r=await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}&_=${ts}`,{cache:"no-store"});if(r.ok){const d=await r.json();const item=d?.result?.list?.[0];if(item&&parseFloat(item.lastPrice)>0)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt||0)*100,source:"Bybit"};}}catch(e){}
+    try{const sym=isGold?"XAU-USDT":"XAG-USDT";const r=await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${sym}`,{cache:"no-store"});if(r.ok){const d=await r.json();const item=d?.data?.[0];if(item&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"OKX"};}}catch(e){}
+    try{const sym=isGold?"XAU_USDT":"XAG_USDT";const r=await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${sym}`,{cache:"no-store"});if(r.ok){const d=await r.json();const item=Array.isArray(d)?d[0]:d;if(item&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"Gate.io"};}}catch(e){}
+    try{const cgId=isGold?"gold":"silver";const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});if(r.ok){const d=await r.json();const p=d[cgId];if(p&&p.usd&&p.usd>(isGold?1000:10))return{price:+p.usd.toFixed(2),change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}}catch(e){}
   }
   return null;
 }
 
-/* ── Ticker ── */
+/* ════════════════════════════════════════
+   TICKER
+════════════════════════════════════════ */
 function buildTicker(prices){
   const all=[...prices,...prices];
   document.getElementById("ticker").innerHTML=all.map(p=>`
@@ -385,16 +415,15 @@ function buildTicker(prices){
     </span>`).join("");
 }
 async function refreshTicker(){
-  // Only fetch crypto in ticker — no Gemini calls here at all
-  const cryptoAssets=ASSETS.filter(a=>a.type==="crypto");
-  const results=await Promise.allSettled(cryptoAssets.map(a=>fetchLivePrice(a)));
-  const prices=cryptoAssets.map((a,i)=>{const r=results[i];return{label:a.label,price:r.status==="fulfilled"&&r.value?r.value.price:null,change:r.status==="fulfilled"&&r.value?r.value.change:null};}).filter(p=>p.price!==null);
+  const results=await Promise.allSettled(ASSETS.filter(a=>a.type==="crypto").map(a=>fetchLivePrice(a)));
+  const prices=ASSETS.filter(a=>a.type==="crypto").map((a,i)=>{const r=results[i];return{label:a.label,price:r.status==="fulfilled"&&r.value?r.value.price:null,change:r.status==="fulfilled"&&r.value?r.value.change:null};}).filter(p=>p.price!==null);
   if(prices.length>0)buildTicker(prices);
 }
-// Refresh every 60s (not 30s) to avoid hammering APIs
 setInterval(refreshTicker,60000);
 
-/* ── UI helpers ── */
+/* ════════════════════════════════════════
+   UI HELPERS
+════════════════════════════════════════ */
 function buildAssets(){
   document.getElementById("assetRow").innerHTML=ASSETS.filter(a=>tab==="CRYPTO"?a.type==="crypto":a.type==="commodity").map(a=>`
     <button class="pill ${a.symbol===asset.symbol?"active":""}" style="${a.symbol===asset.symbol?`border-color:${a.accent}44;color:${a.accent}`:""}" onclick="selectAsset('${a.symbol}')">${a.label}</button>`).join("");
@@ -424,146 +453,105 @@ function showOnly(id){
   });
 }
 function resetResult(){showOnly("idleBox");document.getElementById("priceStrip").style.display="none";}
+function setMsg(txt){
+  document.getElementById("loadTxt").textContent=txt;
+  document.getElementById("loadLabel").textContent=txt;
+}
 function setStep(s){
-  loadStep=s;
-  const lbl=STEPS[Math.min(s,STEPS.length-1)];
-  document.getElementById("loadLabel").textContent=lbl;
+  loadStep=s;setMsg(STEPS[Math.min(s,STEPS.length-1)]);
   document.getElementById("loadSub").textContent=`${asset.label} · ${TF_SHORT[tfIdx]}`;
-  document.getElementById("loadTxt").textContent=lbl;
   [0,1,2,3].forEach(i=>{const b=document.getElementById("lb"+i);b.style.height=i<=s?"28px":"14px";b.style.background=i<=s?"#FFBE00":"#0E1820";b.style.boxShadow=i<=s?"0 0 8px #FFBE00":"none";});
 }
 
-/* ══════════════════════════════════════════════════
-   AI ENGINE — Gemini primary + OpenRouter backup
-   OpenRouter gives free access to many models
-   with no daily quota limits on free tier
-══════════════════════════════════════════════════ */
-let lastAICall = 0;
-const OR_STORE = "openrouter_api_key_v1";
-const getORKey = () => localStorage.getItem(OR_STORE) || "";
-
-function setLoadMsg(txt) {
-  const a = document.getElementById("loadTxt");
-  const b = document.getElementById("loadLabel");
-  if (a) a.textContent = txt;
-  if (b) b.textContent = txt;
-}
-
-async function countdown(seconds, prefix) {
-  for (let s = seconds; s > 0; s--) {
-    setLoadMsg(`${prefix} — ${s}s…`);
-    await new Promise(r => setTimeout(r, 1000));
-  }
-}
-
-/* ── Try Gemini ── */
-async function tryGemini(prompt) {
-  const key = getKey();
-  if (!key) return null;
-  const models = ["gemini-2.0-flash-lite", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
-  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 800 } };
-  for (const model of models) {
-    try {
-      setLoadMsg(`Analyzing with ${model}…`);
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" }
-      );
-      if (res.status === 429 || res.status === 503) { console.warn(`${model} rate limited`); continue; }
-      if (res.status === 403 || res.status === 401) throw new Error("INVALID_KEY");
-      if (!res.ok) continue;
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (text) return text;
-    } catch (e) {
-      if (e.message === "INVALID_KEY") throw new Error("Invalid Gemini API key — click ⚙ to update.");
-      console.warn(`Gemini ${model} failed:`, e.message);
+/* ════════════════════════════════════════
+   AI ENGINE
+   Primary:  Gemini 2.0 Flash Lite (free, fast)
+   Fallback: Gemini 1.5 Flash 8B
+   Backup:   OpenRouter free models
+   NO auto-retry loops — never burns quota
+════════════════════════════════════════ */
+async function tryGemini(prompt){
+  const key=getGKey();
+  if(!key) return null;
+  const models=["gemini-2.0-flash-lite","gemini-1.5-flash-8b","gemini-2.0-flash"];
+  const body={contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:800}};
+  let allRateLimited=true;
+  for(const model of models){
+    try{
+      setMsg(`Analyzing with ${model}…`);
+      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),cache:"no-store"});
+      if(res.status===429||res.status===503){console.warn(model+" rate limited");continue;}
+      allRateLimited=false;
+      if(res.status===403||res.status===401) throw new Error("INVALID_GEMINI_KEY");
+      if(!res.ok) continue;
+      const data=await res.json();
+      const text=data?.candidates?.[0]?.content?.parts?.[0]?.text||"";
+      if(text) return text;
+    }catch(e){
+      if(e.message==="INVALID_GEMINI_KEY") throw new Error("Invalid Gemini key — click ⚙ to update.");
+      console.warn(model,e.message);allRateLimited=false;
     }
   }
-  return null; // all models failed
+  return allRateLimited?"RATE_LIMITED":null;
 }
 
-/* ── Try OpenRouter (free backup) ── */
-async function tryOpenRouter(prompt) {
-  const key = getORKey();
-  if (!key) return null;
-  // Free models on OpenRouter
-  const models = [
-    "meta-llama/llama-3.1-8b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "google/gemma-2-9b-it:free",
-  ];
-  for (const model of models) {
-    try {
-      setLoadMsg(`Backup AI: ${model.split("/")[1].split(":")[0]}…`);
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${key}`,
-          "HTTP-Referer": window.location.href,
-          "X-Title": "AI Trading Scanner",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 800,
-          temperature: 0.3,
-        }),
-        cache: "no-store",
+async function tryOpenRouter(prompt){
+  const key=getORKey();
+  if(!key) return null;
+  const models=["meta-llama/llama-3.1-8b-instruct:free","mistralai/mistral-7b-instruct:free","google/gemma-2-9b-it:free"];
+  for(const model of models){
+    try{
+      setMsg(`Backup AI: ${model.split("/")[1].split(":")[0]}…`);
+      const res=await fetch("https://openrouter.ai/api/v1/chat/completions",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":`Bearer ${key}`,"HTTP-Referer":location.href,"X-Title":"AI Trading Scanner"},
+        body:JSON.stringify({model,messages:[{role:"user",content:prompt}],max_tokens:800,temperature:0.3}),
+        cache:"no-store"
       });
-      if (res.status === 429) { console.warn(`OR ${model} rate limited`); continue; }
-      if (!res.ok) { console.warn(`OR ${model} HTTP ${res.status}`); continue; }
-      const data = await res.json();
-      const text = data?.choices?.[0]?.message?.content || "";
-      if (text) return text;
-    } catch (e) { console.warn(`OR ${model} failed:`, e.message); }
+      if(res.status===429){console.warn("OR rate limited");continue;}
+      if(!res.ok){console.warn("OR HTTP",res.status);continue;}
+      const data=await res.json();
+      const text=data?.choices?.[0]?.message?.content||"";
+      if(text) return text;
+    }catch(e){console.warn("OR",model,e.message);}
   }
   return null;
 }
 
-/* ── Main AI caller — tries both engines ── */
-async function callAI(prompt) {
-  // Enforce minimum gap
-  const gap = Date.now() - lastAICall;
-  if (gap < 4000 && lastAICall > 0) {
-    await countdown(Math.ceil((4000 - gap) / 1000), "Spacing calls");
+async function callAI(prompt){
+  // Enforce 5s minimum gap
+  const gap=Date.now()-lastAICall;
+  if(gap<5000&&lastAICall>0){
+    const w=Math.ceil((5000-gap)/1000);
+    for(let s=w;s>0;s--){setMsg(`Spacing calls — ${s}s…`);await new Promise(r=>setTimeout(r,1000));}
+  }
+  lastAICall=Date.now();
+
+  // 1. Try Gemini
+  const gResult=await tryGemini(prompt);
+  if(gResult&&gResult!=="RATE_LIMITED") return gResult;
+
+  // 2. Gemini rate limited — try OpenRouter
+  if(getORKey()){
+    setMsg("Gemini limit — trying OpenRouter backup…");
+    const orResult=await tryOpenRouter(prompt);
+    if(orResult) return orResult;
+    throw new Error("ALL_LIMITED");
   }
 
-  lastAICall = Date.now();
-
-  // 1. Try Gemini first
-  setLoadMsg("Analyzing with Gemini AI…");
-  const geminiResult = await tryGemini(prompt);
-  if (geminiResult) return geminiResult;
-
-  // 2. Gemini failed — try OpenRouter backup
-  const orKey = getORKey();
-  if (orKey) {
-    setLoadMsg("Gemini rate limited — trying backup AI…");
-    const orResult = await tryOpenRouter(prompt);
-    if (orResult) return orResult;
-  }
-
-  // 3. Both failed — ask for OpenRouter key if not set
-  if (!orKey) {
-    throw new Error(
-      "NEEDS_OR_KEY"
-    );
-  }
-
-  throw new Error("All AI engines rate-limited. Wait 60 seconds and try again.");
+  // 3. No OR key — ask user to add one
+  throw new Error(gResult==="RATE_LIMITED"?"NEEDS_OR_KEY":"AI_FAILED");
 }
 
-// Keep callGemini as alias for compatibility
-async function callGemini(prompt) { return callAI(prompt); }
-
-/* ── Render ── */
+/* ════════════════════════════════════════
+   RENDER RESULT
+════════════════════════════════════════ */
 function renderResult(r,realPrice){
   const m=SIG_META[r.signal]||{color:"#3A5068",glow:"#0000",icon:"◌"};
   const C=2*Math.PI*30;
-  const displayPrice=realPrice||r.price;
-  const decimals=asset.type==="commodity"?2:4;
+  const dp=realPrice||r.price;
+  const dec=asset.type==="commodity"?2:4;
 
   const banner=document.getElementById("sigBanner");
   banner.style.borderLeftColor=m.color;
@@ -581,7 +569,7 @@ function renderResult(r,realPrice){
   document.getElementById("meterTxt").textContent=pct+"%";
   document.getElementById("meterTxt").setAttribute("fill",m.color);
 
-  document.getElementById("priceVal").textContent="$"+Number(displayPrice).toLocaleString("en",{maximumFractionDigits:decimals});
+  document.getElementById("priceVal").textContent="$"+Number(dp).toLocaleString("en",{maximumFractionDigits:dec});
   document.getElementById("priceAsset").textContent=asset.label;
   document.getElementById("priceSource").textContent=livePriceSource?"● "+livePriceSource:"";
 
@@ -635,26 +623,70 @@ function renderResult(r,realPrice){
 }
 
 function pushHistory(r,realPrice){
-  const displayPrice=realPrice||r.price;
-  scanHistory.unshift({signal:r.signal,price:displayPrice,time:r.time,asset:asset.label,tf:TF_SHORT[tfIdx]});
+  const dp=realPrice||r.price;
+  scanHistory.unshift({signal:r.signal,price:dp,time:r.time,asset:asset.label,tf:TF_SHORT[tfIdx]});
   if(scanHistory.length>10)scanHistory.pop();
   document.getElementById("histWrap").style.display="block";
   document.getElementById("histList").innerHTML=scanHistory.map((h,i)=>{
     const hm=SIG_META[h.signal]||{color:"#3A5068",icon:"◌"};
-    const dec=h.price>500?2:4;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:${i===0?"#0A0E14":"transparent"};border-radius:2px;opacity:${1-i*0.08}">
       <span style="font-size:9px;color:#1A2A3A;min-width:70px">${h.time}</span>
       <span style="font-size:10px;color:#1A2A3A;min-width:14px">${h.tf}</span>
       <span style="font-size:10px;color:#2A3A4A;min-width:75px;margin-left:8px">${h.asset}</span>
       <span style="font-size:10px;color:${hm.color};flex:1;letter-spacing:1px">${hm.icon} ${h.signal}</span>
-      <span style="font-size:10px;color:#4A8AFF">$${Number(h.price).toLocaleString("en",{maximumFractionDigits:dec})}</span>
+      <span style="font-size:10px;color:#4A8AFF">$${Number(h.price).toLocaleString("en",{maximumFractionDigits:h.price>500?2:4})}</span>
     </div>`;
   }).join("");
 }
 
-/* ── Main scan ── */
+/* ════════════════════════════════════════
+   SHOW ERROR WITH OR KEY PROMPT
+════════════════════════════════════════ */
+function showError(msg){
+  showOnly("errBox");
+  const isRateLimit=msg.includes("RATE_LIMITED")||msg.includes("ALL_LIMITED")||msg.includes("rate limit")||msg.includes("429");
+  const needsOR=msg.includes("NEEDS_OR_KEY");
+  const isKey=msg.includes("Invalid")||msg.includes("403")||msg.includes("INVALID");
+
+  document.getElementById("errMsg").innerHTML=
+    needsOR ? "⏳ <strong style='color:#FFBE00'>Gemini daily limit reached.</strong> Add a free OpenRouter key as backup:" :
+    isRateLimit ? "⏳ All AI models rate-limited. Wait 60 seconds then retry." :
+    isKey ? "🔑 Invalid API key. Click ⚙ to update your Gemini key." :
+    "⚠ "+msg;
+
+  const extra=document.getElementById("errExtra");
+  if(needsOR){
+    extra.innerHTML=`
+      <div style="background:#06080C;border:1px solid #FFBE0022;border-radius:4px;padding:12px">
+        <div style="font-size:9px;color:#FFBE00;letter-spacing:2px;margin-bottom:8px">OPENROUTER FREE BACKUP</div>
+        <div style="font-size:10px;color:#3A5068;line-height:1.8;margin-bottom:10px">
+          1. Go to <a href="https://openrouter.ai" target="_blank" style="color:#6AAAFF">openrouter.ai</a> → Sign up free<br>
+          2. Keys → Create Key → Copy<br>
+          3. Paste below → unlimited free scans
+        </div>
+        <div style="display:flex;gap:6px">
+          <input type="password" id="inlineORKey" placeholder="sk-or-v1-..." style="flex:1;margin-top:0;padding:8px 10px;font-size:11px"/>
+          <button onclick="saveInlineOR()" style="background:#0E2030;border:1px solid #FFBE0044;color:#FFBE00;padding:8px 14px;border-radius:3px;font-size:10px;font-family:inherit;white-space:nowrap">SAVE & SCAN</button>
+        </div>
+      </div>`;
+  } else {
+    extra.innerHTML="";
+  }
+}
+function saveInlineOR(){
+  const v=document.getElementById("inlineORKey")?.value.trim();
+  if(!v) return;
+  localStorage.setItem(OR_KEY,v);
+  updateKeyBadges();
+  document.getElementById("errBox").style.display="none";
+  setTimeout(scan,300);
+}
+
+/* ════════════════════════════════════════
+   MAIN SCAN
+════════════════════════════════════════ */
 async function scan(){
-  if(loading)return;
+  if(loading) return;
   loading=true;
   const btn=document.getElementById("scanBtn");
   btn.textContent="···";btn.disabled=true;
@@ -664,55 +696,52 @@ async function scan(){
   loadIv=setInterval(()=>setStep(Math.min(loadStep+1,STEPS.length-1)),2000);
 
   try{
-    // Step 1: Real price from API
+    // ── Step 1: Real live price ──
     setStep(0);
     const priceData=await fetchLivePrice(asset);
-    if(!priceData)throw new Error(`Could not fetch live price for ${asset.label}. All price APIs failed — check internet connection.`);
+    if(!priceData) throw new Error(`Cannot fetch live price for ${asset.label} — check internet.`);
 
     livePrice=priceData.price;liveChange=priceData.change;livePriceSource=priceData.source;
-    const decimals=asset.type==="commodity"?2:4;
+    const dec=asset.type==="commodity"?2:4;
+
     const strip=document.getElementById("priceStrip");
     strip.style.display="block";
-    document.getElementById("stripPrice").textContent="$"+livePrice.toLocaleString("en",{maximumFractionDigits:decimals});
+    document.getElementById("stripPrice").textContent="$"+livePrice.toLocaleString("en",{maximumFractionDigits:dec});
     document.getElementById("stripChange").textContent=liveChange!=null?`${liveChange>=0?"▲":"▼"} ${Math.abs(liveChange).toFixed(2)}%`:"";
     document.getElementById("stripChange").style.color=liveChange!=null?(liveChange>=0?"#00CC70":"#FF5C7A"):"#3A5068";
     document.getElementById("stripSource").textContent="via "+livePriceSource;
-    const now=new Date();
-    document.getElementById("stripTime").textContent="fetched at "+now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    document.getElementById("stripTime").textContent="fetched at "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
 
-    // Step 2: Gemini analysis
+    // ── Step 2: AI analysis ──
     setStep(1);
     const assetName=asset.symbol==="XAUUSD"?"Gold (XAU/USD)":asset.symbol==="XAGUSD"?"Silver (XAG/USD)":`${asset.symbol}/USD`;
-    const changeCtx=liveChange!=null?`24h change: ${liveChange>0?"+":""}${liveChange.toFixed(2)}% (${liveChange>2?"strong uptrend":liveChange>0?"mild uptrend":liveChange<-2?"strong downtrend":"mild downtrend"}).`:"";
+    const changeCtx=liveChange!=null?`24h change: ${liveChange>0?"+":""}${liveChange.toFixed(2)}% (${Math.abs(liveChange)>3?(liveChange>0?"strong uptrend":"strong downtrend"):"mild move"}).`:"";
 
     const prompt=`You are a professional trading signal analyst.
 
-LIVE MARKET DATA (fetched right now from ${livePriceSource}):
+CONFIRMED LIVE MARKET DATA (source: ${livePriceSource}):
 Asset: ${assetName}
-Current price: $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} USD
+Current price: $${livePrice.toLocaleString("en",{maximumFractionDigits:dec})} USD
 Timeframe: ${TIMEFRAMES[tfIdx]}
 Time: ${new Date().toUTCString()}
 ${changeCtx}
-${asset.type==="commodity"?"Context: Gold/Silver prices are driven by USD strength, inflation expectations, and Fed policy.":""}
+${asset.type==="commodity"?"Note: Gold/Silver driven by USD strength, inflation, Fed policy.":""}
 
-Based on this CONFIRMED live price of $${livePrice}, analyze the ${TIMEFRAMES[tfIdx]} timeframe:
-- RSI(14): estimate from the 24h momentum${liveChange!=null?(Math.abs(liveChange)>3?(liveChange>0?" — strong up move suggests RSI ~65-75":" — strong down move suggests RSI ~25-35"):" — mild move suggests RSI ~45-55"):""}
-- MACD: is momentum building or fading?
-- EMA 9 vs 21: short-term trend direction
-- Bollinger Bands: where is price relative to recent range?
+Analyze the ${TIMEFRAMES[tfIdx]} timeframe and estimate:
+- RSI(14) based on momentum: ${liveChange!=null?(Math.abs(liveChange)>3?(liveChange>0?"strong up → RSI ~65-75":"strong down → RSI ~25-35"):"mild → RSI ~45-55"):"unknown"}
+- MACD momentum direction
+- EMA 9 vs EMA 21 trend
+- Bollinger Band position
 
-RULES:
-1. "price" field MUST be exactly ${livePrice}
-2. Be specific — reference "$${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}" in your summary
-3. Give 3-4 concrete reasons based on the live data
+RULES: "price" field MUST be exactly ${livePrice}. Mention "$${livePrice.toLocaleString("en",{maximumFractionDigits:dec})}" in summary.
 
-Respond ONLY with raw JSON (no markdown, no backticks):
-{"signal":"BUY","confidence":65,"price":${livePrice},"score":3,"rsi":58.5,"macd":"BULLISH","ema":"UPTREND","bb":"MIDDLE","reasons":[{"txt":"Specific observation about $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})} price action","t":"buy"}],"summary":"One sentence with the actual price $${livePrice.toLocaleString("en",{maximumFractionDigits:decimals})}."}`;
+Respond ONLY with raw JSON no markdown:
+{"signal":"BUY","confidence":65,"price":${livePrice},"score":3,"rsi":58.5,"macd":"BULLISH","ema":"UPTREND","bb":"MIDDLE","reasons":[{"txt":"reason mentioning price","t":"buy"}],"summary":"one sentence with price $${livePrice.toLocaleString("en",{maximumFractionDigits:dec})}."}`;
 
     setStep(2);
-    const text=await callGemini(prompt);
+    const text=await callAI(prompt);
     const match=text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error("No JSON in Gemini response: "+text.slice(0,150));
+    if(!match) throw new Error("No JSON in AI response: "+text.slice(0,120));
 
     setStep(3);
     const parsed=JSON.parse(match[0]);
@@ -724,73 +753,29 @@ Respond ONLY with raw JSON (no markdown, no backticks):
 
   }catch(e){
     console.error(e);
-    showOnly("errBox");
-    const msg = e.message||"Unknown error";
-    // Friendly messages for common errors
-    const isRateLimit = msg.includes("rate limit")||msg.includes("429")||msg.includes("Rate limited")||msg.includes("rate-limited");
-    const needsORKey  = msg.includes("NEEDS_OR_KEY");
-
-    if (needsORKey) {
-      // Show OpenRouter key setup inline
-      document.getElementById("errMsg").innerHTML =
-        `⏳ <strong style="color:#FFBE00">Gemini daily limit reached.</strong><br>
-        Add a free <strong style="color:#C8DCF0">OpenRouter</strong> key as backup — it's free forever with no daily limits on basic models.<br><br>
-        <span style="color:#3A5068;font-size:9px">1. Go to <a href="https://openrouter.ai" target="_blank" style="color:#6AAAFF">openrouter.ai</a> → Sign up free<br>
-        2. Go to Keys → Create Key (free)<br>
-        3. Paste below and click Save</span>`;
-      const cd = document.getElementById("errCountdown");
-      cd.style.display = "block";
-      cd.innerHTML = `
-        <div style="margin-top:10px">
-          <div style="font-size:9px;color:#2A3A4A;letter-spacing:2px;margin-bottom:6px">OPENROUTER API KEY (FREE BACKUP)</div>
-          <div style="display:flex;gap:6px">
-            <input type="password" id="orKeyInput" placeholder="sk-or-..." style="flex:1;background:#06080C;border:1px solid #1A2A3A;color:#C8DCF0;padding:8px 10px;border-radius:3px;font-family:monospace;font-size:11px;outline:none"/>
-            <button onclick="saveORKey()" style="background:#0E2030;border:1px solid #2A4060;color:#6AAAFF;padding:8px 14px;border-radius:3px;font-size:10px;letter-spacing:1px">SAVE</button>
-          </div>
-          <div style="font-size:9px;color:#1A2A3A;margin-top:6px">Or wait until midnight for Gemini quota to reset.</div>
-        </div>`;
-      return;
-    }
-
-    const friendly = isRateLimit
-      ? "⏳ All AI models rate-limited. Wait 60 seconds — auto-retrying…"
-      : msg.includes("Invalid")||msg.includes("403")
-      ? "🔑 Invalid API key. Click ⚙ and re-enter from aistudio.google.com"
-      : "⚠ "+msg;
-    document.getElementById("errMsg").innerHTML = friendly;
-
-    if (isRateLimit) {
-      const cd = document.getElementById("errCountdown");
-      const secsEl = document.getElementById("errSecs");
-      const barEl = document.getElementById("errBar");
-      cd.innerHTML = `<div style="display:flex;justify-content:space-between;font-size:9px;color:#2A3A4A;margin-bottom:4px;letter-spacing:1px"><span>AUTO-RETRY IN</span><span id="errSecs">62</span></div><div style="background:#0E1820;border-radius:3px;height:3px"><div id="errBar" style="height:100%;background:#FF5C7A;width:100%;transition:width 1s linear;border-radius:3px"></div></div>`;
-      cd.style.display = "block";
-      let secs = 62;
-      const iv = setInterval(() => {
-        secs--;
-        const se = document.getElementById("errSecs");
-        const be = document.getElementById("errBar");
-        if(se) se.textContent = secs;
-        if(be) be.style.width = (secs/62*100)+"%";
-        if (secs <= 0) { clearInterval(iv); cd.style.display="none"; scan(); }
-      }, 1000);
-    }
+    showError(e.message||"Unknown error");
   }
+
   clearInterval(loadIv);
-  loading=false;btn.textContent="▶ SCAN MARKET";btn.disabled=false;
+  loading=false;
+  btn.textContent="▶ SCAN MARKET";btn.disabled=false;
   document.getElementById("loadMsg").style.display="none";
 }
 
-/* ── Init ── */
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
 function init(){
   buildAssets();buildTF();updateHeader();
   document.getElementById("scanBtn").onclick=scan;
   document.getElementById("rescanBtn").onclick=scan;
+  document.getElementById("keyInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveKeys();});
 
-  const k=getKey();
+  const k=getGKey();
   if(k){
     document.getElementById("keyModal").style.display="none";
     document.getElementById("app").style.display="block";
+    updateKeyBadges();
     refreshTicker();
   }
 }
