@@ -395,10 +395,48 @@ async function fetchLivePrice(a){
   }
   if(a.type==="commodity"){
     const isGold=a.symbol==="XAUUSD";
-    try{const sym=isGold?"XAUUSDT":"XAGUSDT";const r=await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}&_=${ts}`,{cache:"no-store"});if(r.ok){const d=await r.json();const item=d?.result?.list?.[0];if(item&&parseFloat(item.lastPrice)>0)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt||0)*100,source:"Bybit"};}}catch(e){}
-    try{const sym=isGold?"XAU-USDT":"XAG-USDT";const r=await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${sym}`,{cache:"no-store"});if(r.ok){const d=await r.json();const item=d?.data?.[0];if(item&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"OKX"};}}catch(e){}
-    try{const sym=isGold?"XAU_USDT":"XAG_USDT";const r=await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${sym}`,{cache:"no-store"});if(r.ok){const d=await r.json();const item=Array.isArray(d)?d[0]:d;if(item&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"Gate.io"};}}catch(e){}
-    try{const cgId=isGold?"gold":"silver";const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});if(r.ok){const d=await r.json();const p=d[cgId];if(p&&p.usd&&p.usd>(isGold?1000:10))return{price:+p.usd.toFixed(2),change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}}catch(e){}
+
+    // 1. Binance has XAU/USDT and XAG/USDT perpetual futures — most reliable CORS
+    try{
+      const sym=isGold?"XAUUSDT":"XAGUSDT";
+      const r=await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}&_=${ts}`,{cache:"no-store"});
+      if(r.ok){const d=await r.json();if(d.lastPrice&&parseFloat(d.lastPrice)>0)return{price:parseFloat(d.lastPrice),change:parseFloat(d.priceChangePercent||0),source:"Binance"};}
+    }catch(e){console.warn("Binance gold failed",e.message);}
+
+    // 2. Bybit spot
+    try{
+      const sym=isGold?"XAUUSDT":"XAGUSDT";
+      const r=await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}&_=${ts}`,{cache:"no-store"});
+      if(r.ok){const d=await r.json();const item=d?.result?.list?.[0];if(item&&parseFloat(item.lastPrice)>0)return{price:parseFloat(item.lastPrice),change:parseFloat(item.price24hPcnt||0)*100,source:"Bybit"};}
+    }catch(e){console.warn("Bybit gold failed",e.message);}
+
+    // 3. OKX
+    try{
+      const sym=isGold?"XAU-USDT":"XAG-USDT";
+      const r=await fetch(`https://www.okx.com/api/v5/market/ticker?instId=${sym}`,{cache:"no-store"});
+      if(r.ok){const d=await r.json();const item=d?.data?.[0];if(item&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"OKX"};}
+    }catch(e){console.warn("OKX gold failed",e.message);}
+
+    // 4. Gate.io
+    try{
+      const sym=isGold?"XAU_USDT":"XAG_USDT";
+      const r=await fetch(`https://api.gateio.ws/api/v4/spot/tickers?currency_pair=${sym}`,{cache:"no-store"});
+      if(r.ok){const d=await r.json();const item=Array.isArray(d)?d[0]:d;if(item&&parseFloat(item.last)>0)return{price:parseFloat(item.last),change:null,source:"Gate.io"};}
+    }catch(e){console.warn("Gate.io gold failed",e.message);}
+
+    // 5. CoinGecko gold/silver
+    try{
+      const cgId=isGold?"gold":"silver";
+      const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true&_=${ts}`,{cache:"no-store"});
+      if(r.ok){const d=await r.json();const p=d[cgId];if(p&&p.usd&&p.usd>(isGold?1000:10))return{price:+p.usd.toFixed(2),change:p.usd_24h_change?+p.usd_24h_change.toFixed(2):null,source:"CoinGecko"};}
+    }catch(e){console.warn("CoinGecko gold failed",e.message);}
+
+    // 6. Kraken XBT/USD style — XXAUUSD
+    try{
+      const pair=isGold?"XAUUSD":"XAGUSD";
+      const r=await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`,{cache:"no-store"});
+      if(r.ok){const d=await r.json();const k=Object.keys(d.result||{})[0];if(k){const price=parseFloat(d.result[k].c[0]);if(price>0)return{price,change:null,source:"Kraken"};}}
+    }catch(e){console.warn("Kraken gold failed",e.message);}
   }
   return null;
 }
