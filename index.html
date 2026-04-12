@@ -1,4 +1,4 @@
-a<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -206,8 +206,9 @@ input:focus{border-color:#2A4060}
 
     <div id="errBox" class="card fade" style="display:none;background:#0E0810;border-color:#FF205044">
       <div id="errMsg" style="color:#FF5C7A;font-size:11px;line-height:1.8;margin-bottom:8px"></div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <div style="color:#3A1A2A;font-size:10px;flex:1">Check your keys in ⚙ settings.</div>
+        <button onclick="hardReset()" style="background:#0E1820;border:1px solid #FFBE0044;color:#FFBE00;padding:6px 14px;font-size:10px;border-radius:3px;letter-spacing:1px">⚡ RESET & RETRY</button>
         <button onclick="scan()" style="background:#0E1820;border:1px solid #FF205044;color:#FF5C7A;padding:6px 14px;font-size:10px;border-radius:3px;letter-spacing:1px">↻ RETRY</button>
       </div>
       <div id="errExtra" style="margin-top:10px"></div>
@@ -541,9 +542,9 @@ async function tryOpenRouter(prompt){
 async function callAI(prompt){
   // Enforce 5s minimum gap
   const gap=Date.now()-lastAICall;
-  if(gap<5000&&lastAICall>0){
+  if(gap<2000&&lastAICall>0){
     const w=Math.ceil((5000-gap)/1000);
-    for(let s=w;s>0;s--){setMsg(`Spacing calls — ${s}s…`);await new Promise(r=>setTimeout(r,1000));}
+    await new Promise(r=>setTimeout(r,gap<2000?2000-gap:0));
   }
   lastAICall=Date.now();
 
@@ -701,6 +702,14 @@ function saveInlineOR(){
   setTimeout(scan,300);
 }
 
+function hardReset(){
+  // Clear all rate limit tracking — forces fresh API calls
+  lastAICall=0;
+  console.log("Hard reset — rate limit counters cleared");
+  // Small delay then retry
+  setTimeout(scan,200);
+}
+
 /* ════════════════════════════════════════
    MAIN SCAN
 ════════════════════════════════════════ */
@@ -789,6 +798,10 @@ function init(){
   document.getElementById("scanBtn").onclick=scan;
   document.getElementById("rescanBtn").onclick=scan;
   document.getElementById("keyInput").addEventListener("keydown",e=>{if(e.key==="Enter")saveKeys();});
+
+  // Reset rate limit tracking on page load/focus (new session = fresh quota)
+  lastAICall=0;
+  window.addEventListener("focus",()=>{lastAICall=0;});
 
   const k=getGKey();
   if(k){
